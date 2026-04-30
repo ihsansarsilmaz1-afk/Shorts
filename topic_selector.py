@@ -14,11 +14,25 @@ Strateji:
 import json
 import os
 import random
+import re
 import time
+import unicodedata
 
 
 TOPIC_POOL_PATH = "topic_pool.json"
 USED_TOPICS_PATH = "used_topics.json"
+
+
+def _normalize(text: str) -> str:
+    """Karşılaştırma için normalize eder: küçük harf, özel karakter yok."""
+    text = text.lower().strip()
+    # [NEWS] prefix varsa kaldır
+    if text.startswith("[news] "):
+        text = text[7:]
+    text = unicodedata.normalize("NFKD", text)
+    text = re.sub(r"[^\w\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 def _load_available_topics() -> tuple[list, dict]:
@@ -30,13 +44,22 @@ def _load_available_topics() -> tuple[list, dict]:
         with open(USED_TOPICS_PATH, encoding="utf-8") as f:
             used_data = json.load(f)
 
-    used_set = set(used_data.get("used", []))
-    available = [t for t in all_topics if t not in used_set]
+    # Normalize edilmiş set ile karşılaştır — büyük/küçük harf ve [NEWS] prefix farkı gözetme
+    used_normalized = {_normalize(t) for t in used_data.get("used", [])}
+    available = [t for t in all_topics if _normalize(t) not in used_normalized]
 
     if not available:
-        # Tümü kullanılmış → sıfırla
-        available = all_topics
-        used_data["used"] = []
+        # Tümü kullanılmış → sliding window ile kısmi sıfırlama
+        # Son 30 konuyu koru, gerisini temizle (yakın tekrar önlenir)
+        recent = used_data.get("used", [])[-30:]
+        print(f"[topic_selector] Tüm konular kullanıldı, son {len(recent)} konu korunarak liste sıfırlanıyor.")
+        used_data["used"] = recent
+        recent_normalized = {_normalize(t) for t in recent}
+        available = [t for t in all_topics if _normalize(t) not in recent_normalized]
+        if not available:
+            # Hâlâ boşsa tam sıfırla
+            available = all_topics
+            used_data["used"] = []
 
     return available, used_data
 
@@ -111,12 +134,13 @@ def _maybe_refresh_from_rss() -> None:
         print(f"[topic_selector] RSS tarama atlandı: {e}")
 
 
-def pick_trending_topic(override: str = None) -> tuple[str, dict]:
+def pick_trending_topic(override: str = None, extra_exclude: set = None) -> tuple[str, dict]:
     """
     Google Trends ile en popüler konuyu seçer.
     Döndürür: (seçilen konu, güncellenmiş used_data)
 
     override verilirse Trends'e bakmadan o konuyu döndürür.
+    extra_exclude: ek konu seti — zaten kullanıldı sayılır (batch içi tekrar önler).
     """
     from datetime import date
 
@@ -139,6 +163,46 @@ def pick_trending_topic(override: str = None) -> tuple[str, dict]:
 
     available, used_data = _load_available_topics()
 
+    # Batch içi ekstra hariç tutma (aynı batch'te tekrar seçimi önler)
+    if extra_exclude:
+        available = [t for t in available if t not in extra_exclude]
+        if not available:
+            # Batch içi havuz bitti — tüm used_data'dan sadece extra_exclude'u filtrele
+            with open(TOPIC_POOL_PATH, encoding="utf-8") as f:
+                all_topics = json.load(f)
+            available = [t for t in all_topics if t not in extra_exclude]
+
+    # Keyword filtresi (örn. TOPIC_KEYWORDS=Iran,Israel)
+    topic_keywords_env = os.environ.get("TOPIC_KEYWORDS", "").strip()
+    if topic_keywords_env:
+        keywords = [k.strip().lower() for k in topic_keywords_env.split(",") if k.strip()]
+        filtered = [t for t in available if any(k in t.lower() for k in keywords)]
+        if filtered:
+            available = filtered
+            print(f"[topic_selector] Keyword filtresi aktif ({topic_keywords_env}): {len(available)} eşleşen konu")
+        else:
+            # [NEWS] konularda eşleşme yok — RSS'yi daha geniş zaman aralığıyla yenile ve tekrar dene
+            print(f"[topic_selector] ⚠️  Keyword filtresi için eşleşme yok ({topic_keywords_env}), RSS yenileniyor...")
+            try:
+                import os as _os
+                _os.environ["NEWS_MAX_AGE_HOURS"] = "96"  # 4 günlük pencereyle yeniden dene
+                from rss_monitor import monitor_and_update
+                monitor_and_update(max_topics=10)
+            except Exception as e:
+                print(f"[topic_selector] RSS yenileme hatası: {e}")
+            available2, _ = _load_available_topics()
+            if extra_exclude:
+                available2 = [t for t in available2 if t not in extra_exclude]
+            filtered2 = [t for t in available2 if any(k in t.lower() for k in keywords)]
+            if filtered2:
+                available = filtered2
+                print(f"[topic_selector] RSS yenileme sonrası {len(available)} eşleşen konu bulundu")
+            else:
+                raise RuntimeError(
+                    f"TOPIC_KEYWORDS={topic_keywords_env!r} için hiç konu bulunamadı. "
+                    f"RSS feed'lerinde eşleşen haber yok."
+                )
+
     if len(available) == 1:
         topic = available[0]
     else:
@@ -151,11 +215,16 @@ def pick_trending_topic(override: str = None) -> tuple[str, dict]:
             top_n = sorted_topics[:min(5, len(sorted_topics))]
             topic = random.choice(top_n)
             top_score = scores[topic]
-            print(f"[topic_selector] Top-5'ten rastgele seçildi: '{topic}' (skor: {top_score:.1f})")
+            print(f"[topic_selector] Top-5'ten seçildi: '{topic}' (skor: {top_score:.1f})")
         else:
-            # Fallback: rastgele konu seç
-            topic = random.choice(available)
-            print(f"[topic_selector] Trends kullanılamadı, rastgele: '{topic}'")
+            # Trends kullanılamadı — [NEWS] konular öncelikli, sonra static
+            news_topics = [t for t in available if t.startswith("[NEWS] ")]
+            if news_topics:
+                topic = random.choice(news_topics[:5])
+                print(f"[topic_selector] Trends yok, son dakika haberi seçildi: '{topic}'")
+            else:
+                topic = random.choice(available)
+                print(f"[topic_selector] Trends yok, rastgele: '{topic}'")
 
     used_data.setdefault("used", []).append(topic)
     used_data["last_run"] = str(date.today())

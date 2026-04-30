@@ -18,8 +18,10 @@ Konu formatları:
 import json
 import os
 import re
+import unicodedata
 import xml.etree.ElementTree as ET
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
+from email.utils import parsedate_to_datetime
 from typing import Optional
 
 import requests
@@ -33,11 +35,47 @@ except ImportError:
 
 TIMEOUT = 15
 MONITOR_STATE_PATH = "rss_state.json"
+# Kaç saatlik haberler işlensin (varsayılan: son 48 saat — günlük pipeline uyumlu)
+NEWS_MAX_AGE_HOURS = int(os.environ.get("NEWS_MAX_AGE_HOURS", "48"))
+
+_YEAR = str(datetime.now().year)
 
 RSS_FEEDS = [
+    # --- Doğrudan wire service / haber ajansı RSS'leri (en güncel, en hızlı) ---
+    {
+        "name": "Reuters — World News",
+        "url": "https://feeds.reuters.com/reuters/topNews",
+        "keywords": ["military", "war", "missile", "troops", "attack", "strike", "conflict", "ceasefire", "sanctions", "nuclear"],
+    },
+    {
+        "name": "BBC — World",
+        "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "keywords": ["military", "war", "conflict", "missile", "troops", "attack", "nato", "ukraine", "russia", "china", "iran"],
+    },
+    {
+        "name": "Al Jazeera — News",
+        "url": "https://www.aljazeera.com/xml/rss/all.xml",
+        "keywords": ["military", "war", "missile", "troops", "conflict", "attack", "israel", "iran", "ukraine", "russia"],
+    },
+    {
+        "name": "Kyiv Independent — War Updates",
+        "url": "https://kyivindependent.com/feed/",
+        "keywords": ["ukraine", "russia", "war", "frontline", "attack", "drone", "missile", "ceasefire", "troops", "offensive"],
+    },
+    {
+        "name": "Defense News",
+        "url": "https://www.defensenews.com/arc/outboundfeeds/rss/",
+        "keywords": ["military", "weapon", "missile", "drone", "navy", "army", "air force", "defense", "pentagon", "nato"],
+    },
+    {
+        "name": "Military Times",
+        "url": "https://www.militarytimes.com/arc/outboundfeeds/rss/",
+        "keywords": ["military", "weapon", "troops", "army", "navy", "marine", "air force", "pentagon", "defense"],
+    },
+    # --- Google News arama RSS'leri (geniş kapsam) ---
     {
         "name": "Google News — Military",
-        "url": "https://news.google.com/rss/search?q=military+weapon+defense+2025&hl=en-US&gl=US&ceid=US:en",
+        "url": f"https://news.google.com/rss/search?q=military+weapon+defense+{_YEAR}&hl=en-US&gl=US&ceid=US:en",
         "keywords": ["military", "weapon", "missile", "drone", "fighter", "tank", "navy", "army", "defense"],
     },
     {
@@ -51,9 +89,24 @@ RSS_FEEDS = [
         "keywords": ["iran", "missile", "nuclear", "drone", "hormuz", "irgc"],
     },
     {
-        "name": "Google News — Russia Ukraine",
+        "name": "Google News — Russia Ukraine War",
         "url": "https://news.google.com/rss/search?q=Russia+Ukraine+war+military+weapon&hl=en-US&gl=US&ceid=US:en",
         "keywords": ["russia", "ukraine", "war", "missile", "drone", "front", "offensive"],
+    },
+    {
+        "name": "Google News — Ukraine Latest News",
+        "url": "https://news.google.com/rss/search?q=ukraine+war+latest+news+today&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["ukraine", "war", "latest", "frontline", "attack", "counterattack", "ceasefire", "peace"],
+    },
+    {
+        "name": "Google News — Russia Ukraine Update",
+        "url": "https://news.google.com/rss/search?q=russia+ukraine+war+update+ceasefire+peace+talks&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["ukraine", "russia", "ceasefire", "peace", "negotiations", "offensive", "troops", "frontline"],
+    },
+    {
+        "name": "Google News — Ukraine Battlefield",
+        "url": "https://news.google.com/rss/search?q=ukraine+battlefield+frontline+russian+troops+advance&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["battlefield", "frontline", "troops", "advance", "retreat", "capture", "ukraine", "russia"],
     },
     {
         "name": "Google News — China Taiwan",
@@ -64,6 +117,26 @@ RSS_FEEDS = [
         "name": "Google News — Israel Middle East",
         "url": "https://news.google.com/rss/search?q=Israel+Iran+military+strike+missile+defense&hl=en-US&gl=US&ceid=US:en",
         "keywords": ["israel", "iran", "strike", "missile", "hezbollah", "hamas", "iron dome"],
+    },
+    {
+        "name": "Google News — Iran vs USA",
+        "url": "https://news.google.com/rss/search?q=Iran+United+States+military+confrontation+nuclear+sanctions&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["iran", "united states", "us", "nuclear deal", "sanctions", "irgc", "hormuz", "confrontation", "american", "pentagon iran"],
+    },
+    {
+        "name": "Google News — Iran vs Israel",
+        "url": "https://news.google.com/rss/search?q=Iran+Israel+war+attack+retaliation+missile+drone&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["iran", "israel", "retaliation", "attack", "missile", "drone", "idf", "mossad", "nuclear", "shadow war", "proxy"],
+    },
+    {
+        "name": "Google News — Iran Nuclear Program",
+        "url": "https://news.google.com/rss/search?q=Iran+nuclear+program+enrichment+IAEA+weapon&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["iran", "nuclear", "enrichment", "iaea", "uranium", "bomb", "weapon grade", "natanz", "fordow"],
+    },
+    {
+        "name": "Google News — Iran IRGC Proxy",
+        "url": "https://news.google.com/rss/search?q=IRGC+Iran+proxy+Hezbollah+Houthi+Hamas+attack&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["irgc", "iran", "proxy", "hezbollah", "houthi", "hamas", "axis of resistance", "revolutionary guard"],
     },
     {
         "name": "Google News — NATO Defense",
@@ -84,6 +157,52 @@ RSS_FEEDS = [
         "name": "Google News — Gulf Military UAE Saudi",
         "url": "https://news.google.com/rss/search?q=UAE+Saudi+Arabia+military+arms+deal+defense&hl=en-US&gl=US&ceid=US:en",
         "keywords": ["uae", "saudi", "qatar", "arms", "defense", "deal", "military"],
+    },
+    # --- Amerika / ABD askeri operasyonları ---
+    {
+        "name": "Google News — US Military Operations",
+        "url": "https://news.google.com/rss/search?q=US+military+operation+airstrike+troops+deployed&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["us military", "american", "pentagon", "airstrike", "troops", "deployed", "operation", "special forces", "centcom", "pacom"],
+    },
+    {
+        "name": "Google News — US Navy Carrier Strike",
+        "url": "https://news.google.com/rss/search?q=US+navy+carrier+strike+group+deployed+warship&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["carrier", "strike group", "navy", "warship", "destroyer", "submarine", "7th fleet", "6th fleet", "indo-pacific"],
+    },
+    {
+        "name": "Google News — US Air Force Stealth B-21",
+        "url": "https://news.google.com/rss/search?q=US+air+force+B-21+F-35+stealth+bomber+fighter&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["b-21", "b-2", "f-35", "f-22", "stealth", "bomber", "air force", "usaf", "aircraft"],
+    },
+    {
+        "name": "Google News — US Pentagon Defense Budget",
+        "url": "https://news.google.com/rss/search?q=Pentagon+defense+budget+weapon+contract+military+spending&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["pentagon", "defense budget", "contract", "spending", "lockheed", "raytheon", "northrop", "general dynamics", "boeing defense"],
+    },
+    {
+        "name": "Google News — US Special Forces SOCOM",
+        "url": "https://news.google.com/rss/search?q=US+special+forces+SOCOM+Delta+Force+Rangers+operation&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["special forces", "socom", "delta force", "rangers", "seal", "green berets", "psyop", "covert", "classified"],
+    },
+    {
+        "name": "Google News — US Middle East Houthi Yemen",
+        "url": "https://news.google.com/rss/search?q=US+military+Houthi+Yemen+Red+Sea+airstrike&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["houthi", "yemen", "red sea", "airstrike", "us navy", "centcom", "shipping", "tanker", "drone attack"],
+    },
+    {
+        "name": "Google News — US China Pacific Tension",
+        "url": "https://news.google.com/rss/search?q=US+China+military+Pacific+Taiwan+strait+confrontation&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["us china", "pacific", "taiwan strait", "south china sea", "confrontation", "indopacom", "freedom of navigation"],
+    },
+    {
+        "name": "Google News — US Sanctions Arms Embargo",
+        "url": "https://news.google.com/rss/search?q=US+sanctions+arms+embargo+military+aid+weapon+transfer&hl=en-US&gl=US&ceid=US:en",
+        "keywords": ["sanctions", "arms embargo", "military aid", "weapon transfer", "defense package", "lend-lease", "military assistance"],
+    },
+    {
+        "name": "Stars and Stripes — US Military News",
+        "url": "https://www.stripes.com/arc/outboundfeeds/rss/",
+        "keywords": ["military", "troops", "deployment", "operation", "pentagon", "army", "navy", "air force", "marines", "combat"],
     },
 ]
 
@@ -106,11 +225,15 @@ Convert these into {count} YouTube Shorts topics. Each topic should be an ANALYS
 - "Why [weapon/event] should terrify [country]"
 - "[Event] explained: What nobody is telling you"
 - "The REAL reason behind [event]"
+- "America's [operation/weapon/move]: What it really means"
+- "Why the US [action] changes everything in [region]"
+- "The Pentagon just [action]: Here's what nobody is saying"
 
 RULES:
 - Focus on ANALYSIS and IMPLICATIONS, not just restating the news
 - Make it sound URGENT and TERRIFYING
-- Use specific names, weapons, countries
+- Use specific names, weapons, countries (include US military actions when relevant)
+- Cover US operations, deployments, airstrikes, carrier movements, sanctions
 - Each topic must create massive CURIOSITY
 - Topics must work as standalone Shorts (viewer doesn't need to know the news)
 - NO ancient history — ONLY current events (2024-2025)
@@ -132,8 +255,52 @@ def _save_state(state: dict) -> None:
         json.dump(state, f, indent=2, ensure_ascii=False)
 
 
+def _normalize_title(title: str) -> str:
+    """Başlığı karşılaştırma için normalize eder: küçük harf, özel karakter yok."""
+    title = title.lower().strip()
+    # Unicode normalizasyonu
+    title = unicodedata.normalize("NFKD", title)
+    # Özel karakterleri kaldır, boşluklara dönüştür
+    title = re.sub(r"[^\w\s]", " ", title)
+    # Çoklu boşlukları tek boşluğa indir
+    title = re.sub(r"\s+", " ", title).strip()
+    return title
+
+
+def _parse_pub_date(date_str: str) -> Optional[datetime]:
+    """RSS pubDate string'ini datetime nesnesine çevirir."""
+    if not date_str:
+        return None
+    try:
+        return parsedate_to_datetime(date_str.strip())
+    except Exception:
+        pass
+    # Bazı feed'ler ISO 8601 kullanır
+    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(date_str.strip()[:19], fmt)
+            return dt.replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+
+def _is_recent(pub_date_str: str, max_hours: int = NEWS_MAX_AGE_HOURS) -> bool:
+    """Haberin son max_hours saat içinde yayınlanıp yayınlanmadığını kontrol eder."""
+    if not pub_date_str:
+        # Tarih yoksa dahil et (dışlamak yerine güvenli taraf)
+        return True
+    dt = _parse_pub_date(pub_date_str)
+    if dt is None:
+        return True
+    now = datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return (now - dt) <= timedelta(hours=max_hours)
+
+
 def _fetch_rss(url: str) -> list[dict]:
-    """RSS URL'sini fetch edip item listesi döndürür."""
+    """RSS URL'sini fetch edip item listesi döndürür (pubDate dahil)."""
     try:
         resp = requests.get(url, timeout=TIMEOUT, headers={
             "User-Agent": "Mozilla/5.0 (compatible; WAR-SHORTS-Bot/1.0)"
@@ -147,10 +314,12 @@ def _fetch_rss(url: str) -> list[dict]:
         for item in root.findall(".//item"):
             title_el = item.find("title")
             desc_el = item.find("description")
+            pub_el = item.find("pubDate")
             if title_el is not None and title_el.text:
                 items.append({
                     "title": title_el.text.strip(),
                     "description": desc_el.text.strip() if desc_el is not None and desc_el.text else "",
+                    "pub_date": pub_el.text.strip() if pub_el is not None and pub_el.text else "",
                 })
 
         # Atom feed desteği
@@ -158,10 +327,12 @@ def _fetch_rss(url: str) -> list[dict]:
         for entry in root.findall(".//atom:entry", ns):
             title_el = entry.find("atom:title", ns)
             summary_el = entry.find("atom:summary", ns)
+            updated_el = entry.find("atom:updated", ns)
             if title_el is not None and title_el.text:
                 items.append({
                     "title": title_el.text.strip(),
                     "description": summary_el.text.strip() if summary_el is not None and summary_el.text else "",
+                    "pub_date": updated_el.text.strip() if updated_el is not None and updated_el.text else "",
                 })
 
         return items
@@ -190,6 +361,17 @@ def _is_relevant(title: str, desc: str, keywords: list[str]) -> bool:
         "ukraine", "russia", "china", "taiwan", "iran", "israel",
         "turkey", "saudi", "uae", "korea", "hypersonic", "stealth",
         "submarine", "carrier", "cyber", "satellite",
+        # ABD / Amerika askeri operasyonları
+        "pentagon", "centcom", "pacom", "indopacom", "socom",
+        "us military", "american military", "us army", "us navy", "us air force",
+        "us marines", "us troops", "us forces", "us airstrike", "us strike",
+        "deployed", "deployment", "operation ", "special forces",
+        "delta force", "navy seal", "green beret", "ranger",
+        "b-21", "b-2", "f-35", "f-22", "a-10", "ac-130",
+        "uss ", "carrier strike", "7th fleet", "6th fleet", "5th fleet",
+        "houthi", "red sea", "freedom of navigation",
+        "lockheed", "raytheon", "northrop", "general dynamics",
+        "arms deal", "military aid", "defense package", "lend-lease",
     ]
     return any(kw in combined for kw in military_kws)
 
@@ -258,8 +440,29 @@ def _headlines_to_topics_fallback(headlines: list[str], count: int = 8) -> list[
 NEWS_TOPIC_PREFIX = "[NEWS] "
 
 
+def _load_used_topics_normalized() -> set:
+    """used_topics.json'daki konuları normalize edilmiş set olarak döndürür."""
+    path = "used_topics.json"
+    if not os.path.exists(path):
+        return set()
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        used = data.get("used", [])
+        result = set()
+        for t in used:
+            t_norm = t.lower().strip()
+            if t_norm.startswith("[news] "):
+                t_norm = t_norm[7:]
+            result.add(t_norm)
+        return result
+    except Exception:
+        return set()
+
+
 def _update_topic_pool(new_topics: list[str]) -> int:
-    """Yeni konuları [NEWS] prefix'i ile topic_pool.json'a ekler."""
+    """Yeni konuları [NEWS] prefix'i ile topic_pool.json'a ekler.
+    used_topics.json'daki konularla çakışanları atlar."""
     pool_path = "topic_pool.json"
     try:
         with open(pool_path, encoding="utf-8") as f:
@@ -268,12 +471,15 @@ def _update_topic_pool(new_topics: list[str]) -> int:
         pool = []
 
     existing = {t.lower() for t in pool}
+    used_normalized = _load_used_topics_normalized()
     added = 0
     for topic in new_topics:
         tagged = f"{NEWS_TOPIC_PREFIX}{topic}"
-        if topic.lower() not in existing and len(topic) > 15:
+        topic_norm = topic.lower().strip()
+        # Hem havuzda hem kullanılmış listesinde yoksa ekle
+        if topic_norm not in existing and topic_norm not in used_normalized and len(topic) > 15:
             pool.append(tagged)
-            existing.add(topic.lower())
+            existing.add(topic_norm)
             added += 1
 
     with open(pool_path, "w", encoding="utf-8") as f:
@@ -290,23 +496,41 @@ def monitor_and_update(max_topics: int = 10) -> dict:
         {"topics_found": int, "topics_added": int, "sources_checked": int}
     """
     state = _load_state()
-    seen = set(state.get("seen_titles", []))
+    # Hem orijinal başlıkları hem normalize edilmiş hallerini tut
+    seen_raw = set(state.get("seen_titles", []))
+    seen_normalized = {_normalize_title(t) for t in seen_raw}
 
     all_headlines = []
+    skipped_old = 0
+    skipped_dup = 0
 
     for feed in RSS_FEEDS:
         print(f"[rss] Taranıyor: {feed['name']}")
         items = _fetch_rss(feed["url"])
         for item in items:
             title = item["title"]
-            if title in seen:
+            pub_date = item.get("pub_date", "")
+
+            # Tarih filtresi: sadece son 48 saat
+            if not _is_recent(pub_date):
+                skipped_old += 1
                 continue
+
+            # Dedup: normalize edilmiş başlıkla karşılaştır
+            norm = _normalize_title(title)
+            if norm in seen_normalized:
+                skipped_dup += 1
+                continue
+
             if not _is_relevant(title, item["description"], feed["keywords"]):
                 continue
-            all_headlines.append(title)
-            seen.add(title)
 
-    print(f"[rss] {len(all_headlines)} alakalı haber bulundu")
+            all_headlines.append(title)
+            seen_raw.add(title)
+            seen_normalized.add(norm)
+
+    print(f"[rss] {len(all_headlines)} alakalı haber bulundu "
+          f"({skipped_old} eski, {skipped_dup} tekrar atlandı)")
 
     if not all_headlines:
         state["last_run"] = datetime.now(timezone.utc).isoformat()
@@ -321,7 +545,7 @@ def monitor_and_update(max_topics: int = 10) -> dict:
     added = _update_topic_pool(topics)
 
     # State güncelle
-    state["seen_titles"] = list(seen)[-500:]
+    state["seen_titles"] = list(seen_raw)[-500:]
     state["last_run"] = datetime.now(timezone.utc).isoformat()
     _save_state(state)
 

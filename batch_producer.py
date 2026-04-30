@@ -12,16 +12,28 @@ Kullanım:
 import argparse
 import json
 import os
+import subprocess
 import sys
 import time
 from datetime import date, timedelta
 
-from script_gen import generate_script, save_script
+from script_gen import save_script
 from tts import generate_audio
 from video_builder import build_video
 from thumbnail import generate_thumbnail
 from topic_selector import pick_trending_topic
 from notifier import _send
+
+# ─── v2 modülleri ──────────────────────────────────────────────────────
+from smart_regenerator import smart_generate
+from trend_predictor import rank_topics
+from engagement_booster import generate_engagement_pack
+from series_manager import (
+    has_series_potential, detect_and_plan_series, start_series,
+    get_active_series, get_series_topic_override, advance_series,
+    enrich_script_with_series,
+)
+from ab_title_generator import pick_best_title
 
 
 QUEUE_PATH = "scheduled_queue.json"
@@ -71,6 +83,8 @@ def produce_batch(count: int = 7, dry_run: bool = False, language: str = "en") -
     print("=" * 52)
 
     produced = []
+    batch_seen_ids: set = set()   # Batch boyunca klip tekrarını önler
+    batch_used_topics: set = set()  # Batch içi konu tekrarını önler
     for i in range(count):
         slot_date = start_date + timedelta(days=i)
         video_dir = os.path.join(BATCH_DIR, str(slot_date))
@@ -79,13 +93,23 @@ def produce_batch(count: int = 7, dry_run: bool = False, language: str = "en") -
         print(f"\n[{i+1}/{count}] Tarih: {slot_date}")
 
         try:
-            # 1) Konu seç
-            topic, used_data = pick_trending_topic()
-            _save_used(used_data)
+            # 1) Konu seç — seri sistemi devre dışı
+            # extra_exclude: bu batch'te zaten kullanılan konuları tekrar seçme
+            topic, used_data = pick_trending_topic(extra_exclude=batch_used_topics)
+            batch_used_topics.add(topic)
             print(f"  Konu: {topic}")
+            _save_used(used_data)
 
-            # 2) Script üret
-            script = generate_script(topic, language)
+            # 2) Script üret — akıllı yeniden üretim ile
+            script, score_bd = smart_generate(topic, language)
+            print(f"  Script skor: {score_bd.total}/100")
+
+            # 2d) A/B başlık optimizasyonu
+            try:
+                pick_best_title(script)
+            except Exception as e:
+                print(f"  ⚠️ A/B başlık hatası: {e}", file=sys.stderr)
+
             script_path = os.path.join(video_dir, "script.json")
             with open(script_path, "w", encoding="utf-8") as f:
                 json.dump(script, f, indent=2, ensure_ascii=False)
@@ -116,6 +140,7 @@ def produce_batch(count: int = 7, dry_run: bool = False, language: str = "en") -
             video_path = build_video(
                 script, audio_path, vtt_path,
                 output_path=os.path.join(video_dir, "short.mp4"),
+                seen_ids=batch_seen_ids,
             )
 
             # 5) Thumbnail
@@ -124,6 +149,15 @@ def produce_batch(count: int = 7, dry_run: bool = False, language: str = "en") -
                 script["thumbnail_text"],
                 output_path=os.path.join(video_dir, "thumbnail.png"),
             )
+
+            # 6) Etkileşim paketi üret (upload sırasında kullanılacak)
+            engagement = None
+            try:
+                engagement = generate_engagement_pack(script)
+            except Exception as e:
+                print(f"  ⚠️ Etkileşim paketi hatası: {e}", file=sys.stderr)
+
+            # 6b) Seri sistemi devre dışı
 
             produced.append({
                 "scheduled_date": str(slot_date),
@@ -135,9 +169,11 @@ def produce_batch(count: int = 7, dry_run: bool = False, language: str = "en") -
                 "thumbnail_path": thumb_path,
                 "language": language,
                 "published": False,
+                "engagement_pack": engagement,
+                "score": score_bd.total,
             })
 
-            print(f"  ✅ Video hazır: {video_path}")
+            print(f"  ✅ Video hazır: {video_path} (skor: {score_bd.total}/100)")
 
         except Exception as e:
             print(f"  ❌ Hata: {e}", file=sys.stderr)
@@ -160,6 +196,23 @@ def produce_batch(count: int = 7, dry_run: bool = False, language: str = "en") -
     save_queue(queue)
 
     success = sum(1 for p in produced if not p.get("error"))
+
+    # used_topics.json'u git'e commit et (batch sonrası kalıcı dedup)
+    try:
+        subprocess.run(["git", "config", "user.name", "github-actions[bot]"], check=False)
+        subprocess.run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.com"], check=False)
+        subprocess.run(["git", "add", "used_topics.json"], check=True)
+        diff_result = subprocess.run(["git", "diff", "--cached", "--quiet"])
+        if diff_result.returncode != 0:  # Staged değişiklik varsa commit et
+            subprocess.run(
+                ["git", "commit", "-m", f"chore: batch sonrası used_topics güncelle ({success}/{count} video)"],
+                check=True,
+            )
+            print("  ✅ used_topics.json git'e commit edildi")
+        else:
+            print("  ℹ️ used_topics.json değişmedi, commit atlandı")
+    except subprocess.CalledProcessError as e:
+        print(f"  ⚠️ Git commit başarısız (devam ediliyor): {e}", file=sys.stderr)
     print(f"\n{'='*52}")
     print(f"✅ Batch tamamlandı: {success}/{count} video üretildi")
     print(f"   Kuyruk: {QUEUE_PATH}")

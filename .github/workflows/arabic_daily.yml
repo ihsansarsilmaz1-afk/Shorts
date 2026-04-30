@@ -1,13 +1,13 @@
-name: WAR SHORTS — Daily Pipeline
+name: WAR SHORTS — Arabic Batch
 
 on:
   schedule:
-    - cron: '0 2 * * *'    # Her gün 02:00 UTC = 21:00 EST (ABD prime time)
-  workflow_dispatch:        # Manuel tetikleme
+    - cron: '0 3 * * *'    # Her gün 03:00 UTC
+  workflow_dispatch:
 
 jobs:
-  run-pipeline:
-    if: github.event_name == 'workflow_dispatch' || vars.ACTIVE_SYSTEM == 'en' || vars.ACTIVE_SYSTEM == 'tr' || vars.ACTIVE_SYSTEM == ''
+  run-arabic-pipeline:
+    if: github.event_name == 'workflow_dispatch' || vars.ACTIVE_SYSTEM == 'ar'
     runs-on: ubuntu-latest
     timeout-minutes: 55
 
@@ -19,51 +19,33 @@ jobs:
         uses: actions/cache@v4
         with:
           path: used_topics.json
-          key: used-topics-${{ github.run_id }}
+          key: used-topics-ar-${{ github.run_id }}
           restore-keys: |
-            used-topics-
+            used-topics-ar-
 
       - name: Restore RSS state cache
         uses: actions/cache@v4
         with:
           path: rss_state.json
-          key: rss-state-${{ github.run_id }}
+          key: rss-state-ar-${{ github.run_id }}
           restore-keys: |
-            rss-state-
+            rss-state-ar-
 
       - name: Restore playlist IDs cache
         uses: actions/cache@v4
         with:
           path: playlist_ids.json
-          key: playlist-ids-${{ github.run_id }}
+          key: playlist-ids-ar-${{ github.run_id }}
           restore-keys: |
-            playlist-ids-
+            playlist-ids-ar-
 
       - name: Restore seen clip IDs cache
         uses: actions/cache@v4
         with:
           path: output/seen_clip_ids.json
-          key: seen-clip-ids-${{ github.run_id }}
+          key: seen-clip-ids-ar-${{ github.run_id }}
           restore-keys: |
-            seen-clip-ids-
-
-      - name: Restore freq_used_topics cache
-        if: ${{ vars.LANGUAGE == 'hz' }}
-        uses: actions/cache@v4
-        with:
-          path: freq_used_topics.json
-          key: freq-used-topics-${{ github.run_id }}
-          restore-keys: |
-            freq-used-topics-
-
-      - name: Restore freq_seen_pexels_ids cache
-        if: ${{ vars.LANGUAGE == 'hz' }}
-        uses: actions/cache@v4
-        with:
-          path: output/freq_seen_pexels_ids.json
-          key: freq-seen-pexels-${{ github.run_id }}
-          restore-keys: |
-            freq-seen-pexels-
+            seen-clip-ids-ar-
 
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
@@ -75,7 +57,7 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Install system dependencies
+      - name: Install system dependencies (including Arabic fonts)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg imagemagick fonts-liberation fonts-noto-core fonts-noto-extra
@@ -123,19 +105,13 @@ jobs:
             echo "$YT_COOKIES" > yt_cookies.txt
           fi
 
-      - name: Download Arabic font (LANGUAGE=ar için gerekli)
+      - name: Download Arabic font
         run: python -c "from setup_assets import download_arabic_font; download_arabic_font()"
 
-      - name: Run pipeline
-        run: |
-          if [ "$LANGUAGE" = "hz" ]; then
-            echo "=== MODE: FREQ SHORTS (LANGUAGE=hz) ==="
-            python freq_main.py
-          else
-            echo "=== MODE: WAR SHORTS (LANGUAGE=$LANGUAGE) ==="
-            python main.py
-          fi
+      - name: Run Arabic pipeline
+        run: python main.py
         env:
+          TOPIC_KEYWORDS: ${{ vars.TOPIC_KEYWORDS || 'Israel,Gaza,Hamas,Hezbollah,IDF,West Bank,Jerusalem,Iran,IRGC,Iran nuclear,Iran missile,Iran US,Iran Israel,Iranian' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DVIDS_API_KEY: ${{ secrets.DVIDS_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
@@ -147,11 +123,9 @@ jobs:
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
           TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
-          LANGUAGE: ${{ vars.ACTIVE_SYSTEM || vars.LANGUAGE || 'en' }}
-          TOPIC_KEYWORDS: ${{ vars.TOPIC_KEYWORDS || 'Israel,Gaza,Hamas,Hezbollah,IDF,West Bank,Jerusalem,Iran,IRGC,Iran nuclear,Iran missile,Iran US,Iran Israel,Iranian' }}
+          LANGUAGE: ar
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USE_QUEUE: ${{ vars.USE_QUEUE || 'false' }}
-          USE_FREQ_QUEUE: ${{ vars.USE_FREQ_QUEUE || 'false' }}
           GOOGLE_DRIVE_BACKUP: ${{ vars.GOOGLE_DRIVE_BACKUP || 'false' }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           COMPETITOR_CHANNEL_IDS: ${{ vars.COMPETITOR_CHANNEL_IDS }}
@@ -168,79 +142,50 @@ jobs:
         uses: actions/cache@v4
         with:
           path: output/last_video.json
-          key: last-video-${{ github.run_id }}
-
-      - name: Save A/B state cache
-        if: always()
-        uses: actions/cache@v4
-        with:
-          path: output/ab_state.json
-          key: ab-state-${{ github.run_id }}
+          key: last-video-ar-${{ github.run_id }}
 
       - name: Save RSS state cache
         if: always()
         uses: actions/cache@v4
         with:
           path: rss_state.json
-          key: rss-state-${{ github.run_id }}
+          key: rss-state-ar-${{ github.run_id }}
 
       - name: Save playlist IDs cache
         if: always()
         uses: actions/cache@v4
         with:
           path: playlist_ids.json
-          key: playlist-ids-${{ github.run_id }}
+          key: playlist-ids-ar-${{ github.run_id }}
 
       - name: Save used_topics cache
         if: always()
         uses: actions/cache@v4
         with:
           path: used_topics.json
-          key: used-topics-${{ github.run_id }}
+          key: used-topics-ar-${{ github.run_id }}
 
       - name: Save seen clip IDs cache
         if: always()
         uses: actions/cache@v4
         with:
           path: output/seen_clip_ids.json
-          key: seen-clip-ids-${{ github.run_id }}
+          key: seen-clip-ids-ar-${{ github.run_id }}
 
-      - name: Save freq_used_topics cache
-        if: ${{ always() && vars.LANGUAGE == 'hz' }}
-        uses: actions/cache@v4
-        with:
-          path: freq_used_topics.json
-          key: freq-used-topics-${{ github.run_id }}
-
-      - name: Save freq_seen_pexels_ids cache
-        if: ${{ always() && vars.LANGUAGE == 'hz' }}
-        uses: actions/cache@v4
-        with:
-          path: output/freq_seen_pexels_ids.json
-          key: freq-seen-pexels-${{ github.run_id }}
-
-      - name: Commit state files to git (kalıcı dedup)
+      - name: Commit used_topics.json to git (kalıcı dedup)
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ "$LANGUAGE" = "hz" ]; then
-            git add freq_used_topics.json || true
-            git add output/freq_seen_pexels_ids.json || true
-            git diff --cached --quiet || git commit -m "chore: update freq state after daily run [skip ci]"
-          else
-            git add used_topics.json
-            git diff --cached --quiet || git commit -m "chore: update used_topics after daily run [skip ci]"
-          fi
+          git add used_topics.json
+          git diff --cached --quiet || git commit -m "chore: update used_topics after arabic run [skip ci]"
           git pull --rebase origin $(git rev-parse --abbrev-ref HEAD) || true
           git push origin HEAD || true
-        env:
-          LANGUAGE: ${{ vars.LANGUAGE || 'en' }}
 
-      - name: Upload output artifacts (debug)
-        if: failure()
+      - name: Upload output artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pipeline-output-${{ github.run_id }}
+          name: arabic-pipeline-output-${{ github.run_id }}
           path: output/
-          retention-days: 3
+          retention-days: 7

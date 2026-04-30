@@ -21,6 +21,7 @@ import tempfile
 import shutil
 import subprocess
 from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
@@ -44,6 +45,7 @@ TARGET_H = 1920
 DVIDS_API = "https://api.dvidshub.net/search"
 ARCHIVE_API = "https://archive.org/advancedsearch.php"
 YT_COOKIES_PATH = os.environ.get("YT_COOKIES_PATH", "yt_cookies.txt")
+YT_PROXY = os.environ.get("YT_PROXY", "")  # e.g. socks5://localhost:1080
 
 # ─── YouTube CC Askeri Keyword Havuzu ────────────────────────────────────────
 
@@ -140,13 +142,23 @@ YT_MILITARY_KEYWORDS = {
         "military flag ceremony footage", "soldiers patrol footage",
         "military camp footage", "army barracks footage",
     ],
+    "conflict": [
+        "war zone footage", "frontline combat footage",
+        "military operation footage", "battlefield footage",
+        "troops advancing footage", "urban warfare footage",
+        "ceasefire footage", "military press conference footage",
+        "sanctions military news footage", "geopolitics military footage",
+        "war correspondent footage", "military checkpoint footage",
+        "soldiers in the field footage", "military base operations footage",
+        "troop deployment footage", "military strategy briefing footage",
+    ],
 }
 FONT_PATH = "assets/fonts/Montserrat-Bold.ttf"
 LOGO_PATH = "assets/logo.png"
 INTRO_PATH = "assets/intro.mp4"
 OUTRO_PATH = "assets/outro.mp4"
-CROSSFADE_DUR = 0.4
-CTA_DURATION = 3.0
+CROSSFADE_DUR = 0.2
+CTA_DURATION = 2.0   # 3.0'dan kısaltıldı — % watched artışı için
 
 # Ses efekti dosyaları
 SFX = {
@@ -225,6 +237,35 @@ KB_EFFECTS = ["zoom_in", "zoom_out", "pan_right", "pan_left", "pan_down", "diago
 
 # Geçiş tipleri
 TRANSITION_TYPES = ["crossfade", "fade_black", "hard_cut", "slide"]
+
+# Klip ve resim süreleri
+VIDEO_CLIP_DURATION = 2.5   # Her video klip süresi (saniye)
+IMAGE_CLIP_DURATION = 2.0   # Araya eklenen resim süresi (saniye)
+
+# ─── Power word sözlüğü (altyazıda sarı vurgu) ────────────────────────────────
+_POWER_WORDS: dict[str, set] = {
+    "en": {
+        "BREAKING", "URGENT", "SHOCKING", "WARNING", "CRITICAL", "REVEALED",
+        "SECRET", "JUST", "ALERT", "EXCLUSIVE", "CLASSIFIED", "TERROR",
+        "NUCLEAR", "ATTACK", "DANGER", "NOW", "DEAD", "KILL", "WAR",
+    },
+    "tr": {
+        "ACİL", "ŞOKE", "KRİTİK", "UYARI", "GİZLİ", "İŞTE", "ÖZEL", "SON",
+        "ALARM", "TEHLİKE", "SAVAŞ", "NÜKLEER", "SALDIRI", "ÖLÜM", "ŞIMDI",
+    },
+    "ar": {
+        "عاجل", "صادم", "خطير", "حصري", "مرعب", "كارثي", "سري", "الآن",
+        "تحذير", "هجوم", "نووي", "حرب", "موت", "مفاجئ", "عاجلاً",
+    },
+}
+
+def _is_power_word(word: str) -> bool:
+    """Kelimenin herhangi bir dildeki power word listesinde olup olmadığını kontrol eder."""
+    clean = word.strip(".,!?:;\"'()[]").upper()
+    for words in _POWER_WORDS.values():
+        if clean in words:
+            return True
+    return False
 
 
 # ─── Style Profile ───────────────────────────────────────────────────────────
@@ -318,16 +359,39 @@ def _generate_style_profile(script: dict) -> StyleProfile:
 
 # ─── Müzik seçimi ────────────────────────────────────────────────────────────
 
+_MILITARY_PRIORITY_TRACKS = {
+    "assets/music/dark_04_burn_the_world.mp3",
+    "assets/music/action_09_big_drumming.mp3",
+    "assets/music/suspense_07_stay_the_course.mp3",
+    "assets/music/dark_08_tyrant.mp3",
+    "assets/music/dark_12_feral_angel.mp3",
+}
+
+_MILITARY_KEYWORDS = {
+    "military", "war", "attack", "troops", "missile", "iran", "israel", "gaza",
+    "strike", "bomb", "nuclear", "army", "weapon", "conflict", "combat",
+    "hamas", "hezbollah", "idf", "irgc", "drone", "airstrike",
+}
+
+
 def _pick_music(script: dict) -> str:
-    """Script içeriğine göre en uygun arka plan müziğini seçer."""
+    """Script içeriğine göre en uygun arka plan müziğini seçer.
+    Askeri içerik için dark/action parçaları önceliklendirilir.
+    """
     text = (script.get("title", "") + " " + script.get("narration", "")).lower()
     keywords = [kw.lower() for kw in script.get("search_keywords", [])]
+    all_text = text + " " + " ".join(keywords)
+
+    is_military = any(kw in all_text for kw in _MILITARY_KEYWORDS)
 
     scores = []
     for path, mood_words in MUSIC_POOL:
         if not os.path.exists(path):
             continue
         score = sum(1 for mw in mood_words if mw in text or mw in " ".join(keywords))
+        # Askeri içerik: gerilimli/aksiyonlu parçalara +2 bonus
+        if is_military and path in _MILITARY_PRIORITY_TRACKS:
+            score += 2
         scores.append((path, score))
 
     if not scores:
@@ -338,13 +402,62 @@ def _pick_music(script: dict) -> str:
         best = [p for p, s in scores if s == max_score]
         pick = random.choice(best)
     else:
-        pick = random.choice([p for p, _ in scores])
+        # Askeri içerik ise yine de priority listesinden seç
+        if is_military:
+            priority = [p for p, _ in scores if p in _MILITARY_PRIORITY_TRACKS]
+            pick = random.choice(priority) if priority else random.choice([p for p, _ in scores])
+        else:
+            pick = random.choice([p for p, _ in scores])
 
-    print(f"[video_builder] Müzik seçildi: {os.path.basename(pick)}")
+    print(f"[video_builder] Müzik seçildi: {os.path.basename(pick)} (military={is_military})")
     return pick
 
 
 # ─── Font yardımcısı ─────────────────────────────────────────────────────────
+
+ARABIC_FONT_PATH = "assets/fonts/NotoNaskhArabic-Bold.ttf"
+
+
+def _sanitize_for_arabic_font(text: str) -> str:
+    """Arapça fontunda bulunmayan özel Unicode karakterleri temizler."""
+    replacements = {
+        "\u2018": "'", "\u2019": "'",   # curly single quotes → straight
+        "\u201C": '"', "\u201D": '"',   # curly double quotes → straight
+        "\u2013": "-", "\u2014": "-",   # en/em dash → hyphen
+        "\u2026": "...",                # ellipsis → dots
+    }
+    for src, dst in replacements.items():
+        text = text.replace(src, dst)
+    return text
+
+
+def _prepare_text(text: str) -> str:
+    """Arapça metin için harf birleşimi (reshaper) ve RTL yönü (bidi) uygular."""
+    if not _is_arabic(text):
+        return text
+    text = _sanitize_for_arabic_font(text)
+    try:
+        import arabic_reshaper
+        from bidi.algorithm import get_display
+        import re as _re
+        reshaped = arabic_reshaper.reshape(text)
+        display = get_display(reshaped)
+        # PIL bidi kontrol karakterlerini işleyemiyor — temizle
+        display = _re.sub(r'[\u200e\u200f\u202a-\u202e\u2066-\u2069]', '', display)
+        return display
+    except ImportError:
+        return text
+
+
+def _is_arabic(text: str) -> bool:
+    """Metnin Arapça karakter içerip içermediğini kontrol eder (presentation forms dahil)."""
+    return any(
+        "\u0600" <= ch <= "\u06FF"    # Basic Arabic
+        or "\uFB50" <= ch <= "\uFDFF"  # Arabic Presentation Forms-A
+        or "\uFE70" <= ch <= "\uFEFF"  # Arabic Presentation Forms-B
+        for ch in text
+    )
+
 
 def _load_font(size: int) -> ImageFont.FreeTypeFont:
     for path in [
@@ -358,6 +471,26 @@ def _load_font(size: int) -> ImageFont.FreeTypeFont:
             except OSError:
                 continue
     return ImageFont.load_default()
+
+
+def _load_font_for_text(text: str, size: int) -> ImageFont.FreeTypeFont:
+    """Metne göre uygun fontu yükler: Arapça ise Noto Naskh, değilse varsayılan."""
+    if _is_arabic(text):
+        import glob as _glob
+        candidate_paths = [
+            ARABIC_FONT_PATH,
+            "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Bold.ttf",
+            "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf",
+        ]
+        candidate_paths += sorted(_glob.glob("/usr/share/fonts/**/*Arabic*Bold*.ttf", recursive=True))
+        candidate_paths += sorted(_glob.glob("/usr/share/fonts/**/*Arabic*.ttf", recursive=True))
+        for path in candidate_paths:
+            if os.path.exists(path):
+                try:
+                    return ImageFont.truetype(path, size)
+                except OSError:
+                    continue
+    return _load_font(size)
 
 
 # ─── Klip indirme ────────────────────────────────────────────────────────────
@@ -386,13 +519,17 @@ def _pick_yt_category(keywords: list) -> str:
         "missiles": ["missile", "icbm", "hypersonic", "patriot", "s-400", "iron dome", "thaad", "nuclear", "nuke", "rocket"],
         "explosions": ["explosion", "bomb", "airstrike", "artillery", "howitzer", "demolition", "mortar"],
         "training": ["training", "exercise", "drill", "boot camp"],
+        "conflict": ["ceasefire", "negotiation", "sanction", "diplomacy", "talks", "agreement",
+                     "peace", "frontline", "war zone", "occupation", "offensive", "invasion",
+                     "blockade", "embargo", "ultimatum", "tension", "escalat", "geopolit"],
     }
 
     for cat, hints in category_hints.items():
         if any(h in kw_lower for h in hints):
             return cat
 
-    return random.choice(list(YT_MILITARY_KEYWORDS.keys()))
+    # Eşleşme yoksa: script'in konusunu anlamlandıran genel savaş/çatışma havuzu
+    return "conflict"
 
 
 def _fetch_youtube_cc_clips(keywords: list, n: int, seen_ids: set) -> list[str]:
@@ -414,10 +551,16 @@ def _fetch_youtube_cc_clips(keywords: list, n: int, seen_ids: set) -> list[str]:
     random.shuffle(yt_pool)
 
     script_queries = []
-    for kw in keywords[:3]:
-        script_queries.append(f"{kw} footage")
+    for kw in keywords[:10]:
+        # Zaten "footage" içeriyorsa tekrar ekleme
+        if "footage" in kw.lower() or "operations" in kw.lower():
+            script_queries.append(kw)
+        else:
+            script_queries.append(f"{kw} footage")
     if len(keywords) >= 2:
-        script_queries.append(f"{keywords[0]} {keywords[1]} footage")
+        combined = f"{keywords[0]} {keywords[1]}"
+        if combined not in script_queries:
+            script_queries.append(f"{combined} footage")
 
     all_queries = script_queries + yt_pool
     seen_queries = set()
@@ -433,53 +576,273 @@ def _fetch_youtube_cc_clips(keywords: list, n: int, seen_ids: set) -> list[str]:
             break
 
         try:
-            tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix="ytcc_full_")
-            tmp.close()
+            # YouTube CC arama filtresi: sp=EgIwAQ%3D%3D → YouTube kendi tarafında
+            # sadece Creative Commons videoları döndürür. yt-dlp'nin license field'i
+            # YouTube watch sayfasından güvenilir şekilde çekilemiyor (hep boş geliyor),
+            # bu yüzden YouTube'un kendi CC filtresine güveniyoruz.
+            cookie_args = []
+            if os.path.exists(YT_COOKIES_PATH) and os.path.getsize(YT_COOKIES_PATH) > 0:
+                cookie_args = ["--cookies", YT_COOKIES_PATH]
+            else:
+                print(f"[video_builder] Uyarı: {YT_COOKIES_PATH} bulunamadı veya boş — bot tespiti riski yüksek")
 
-            cmd = [
+            encoded_q = query.replace(" ", "+").replace("'", "%27")
+            yt_cc_url = (
+                f"https://www.youtube.com/results"
+                f"?search_query={encoded_q}&sp=EgIwAQ%3D%3D"
+            )
+            proxy_args = ["--proxy", YT_PROXY] if YT_PROXY else []
+            id_cmd = [
                 "yt-dlp",
-                f"ytsearch5:{query}",
-                "--match-filter", "license=Creative Commons",
-                "--format", "bestvideo[height>=720][ext=mp4]+bestaudio[ext=m4a]/best[height>=720][ext=mp4]/best",
-                "--merge-output-format", "mp4",
-                "--max-downloads", "1",
-                "--max-filesize", "100M",
-                "--no-playlist",
+                yt_cc_url,
+                "--flat-playlist",     # sadece metadata, video indirme yok
+                "--playlist-end", "5", # ilk 5 sonuç yeterli
+                "--print", "id",
                 "--no-warnings",
-                "--quiet",
                 "--no-progress",
-                "-o", tmp.name,
+                "--extractor-args", "youtube:player_client=web_creator,web,default",
+            ] + cookie_args + proxy_args
+            id_result = subprocess.run(id_cmd, timeout=30, capture_output=True, text=True)
+            video_ids = [l.strip() for l in id_result.stdout.splitlines()
+                         if l.strip() and len(l.strip()) == 11]
+            print(f"[video_builder] YouTube CC '{query}': {len(video_ids)} ID "
+                  f"(rc={id_result.returncode})")
+            if not video_ids and id_result.stderr:
+                print(f"[video_builder]   stderr: {id_result.stderr.strip()[:200]}")
+
+            if not video_ids:
+                continue
+
+            try:
+                import yt_dlp as _ytdlp
+            except ImportError:
+                print("[video_builder] yt_dlp modülü import edilemiyor.")
+                return downloaded
+
+            cookie_file = (YT_COOKIES_PATH
+                           if os.path.exists(YT_COOKIES_PATH)
+                           and os.path.getsize(YT_COOKIES_PATH) > 0
+                           else None)
+
+            # yt-dlp'nin kendi hata mesajlarını bastır; sadece bizim loglarımız görünsün.
+            class _SilentLogger:
+                def debug(self, _): pass
+                def info(self, _): pass
+                def warning(self, _): pass
+                def error(self, msg):
+                    print(f"[video_builder]   yt-dlp: {msg[:120]}")
+
+            # ── YouTube İndirme: 2 katmanlı strateji ──────────────────
+            # 1) pytubefix (auth'suz) → ANDROID_VR en güvenilir client
+            # 2) yt-dlp + cookies     → son çare
+            #
+            # NOT: use_po_token deprecated (stdin'den input bekliyor → CI'da patlar).
+            # pytubefix OAuth da CI'da pratik değil.
+
+            # pytubefix client listesi: ANDROID_VR tek yeterli, diğerleri zaman kaybı.
+            _PTF_CLIENTS = [
+                "ANDROID_VR",
             ]
 
-            # Kimlik doğrulama: cookie dosyası > browser cookies
-            if os.path.exists(YT_COOKIES_PATH):
-                cmd.extend(["--cookies", YT_COOKIES_PATH])
-            else:
-                cmd.extend(["--cookies-from-browser", "firefox"])
+            # pytubefix proxy ayarı (varsa).
+            _ptf_proxies = ({"https": YT_PROXY, "http": YT_PROXY}
+                            if YT_PROXY else None)
 
-            print(f"[video_builder] YouTube CC aranıyor: '{query}'...")
-            result = subprocess.run(cmd, timeout=120, capture_output=True, text=True)
+            # yt-dlp client listesi (son çare — daha permissive format).
+            _YTDLP_CLIENTS = [
+                (["web_creator"], None), (["web"], None),
+                (["default"], None),
+            ]
 
-            actual_file = tmp.name
-            if not os.path.exists(actual_file) or os.path.getsize(actual_file) < 10000:
-                for ext in [".mp4", ".webm", ".mkv"]:
-                    alt = tmp.name + ext
-                    if os.path.exists(alt) and os.path.getsize(alt) > 10000:
-                        actual_file = alt
-                        break
+            def _pick_stream(yt_obj):
+                """En iyi stream'i seç: adaptive 1080p > progressive 720p, 480p altı red."""
+                # 1) Adaptive 1080p video-only + ayrı audio → ffmpeg merge
+                if shutil.which("ffmpeg"):
+                    v = (yt_obj.streams
+                         .filter(adaptive=True, file_extension="mp4", only_video=True)
+                         .order_by("resolution").desc().first())
+                    a = (yt_obj.streams
+                         .filter(adaptive=True, only_audio=True)
+                         .order_by("abr").desc().first())
+                    if v and a:
+                        res = getattr(v, "resolution", "") or ""
+                        h = int(res.replace("p", "")) if res.replace("p", "").isdigit() else 0
+                        if h >= 720:
+                            return ("adaptive", v, a)  # tuple → merge gerekli
 
-            if not os.path.exists(actual_file) or os.path.getsize(actual_file) < 10000:
+                # 2) Progressive fallback — min 720p
+                s = (yt_obj.streams
+                     .filter(progressive=True, file_extension="mp4")
+                     .order_by("resolution").desc().first())
+                if s:
+                    res = getattr(s, "resolution", "") or ""
+                    h = int(res.replace("p", "")) if res.replace("p", "").isdigit() else 0
+                    if h >= 720:
+                        return ("progressive", s)
+                return None  # kalite yetersiz, bu videoyu atla
+
+            def _download_stream(stream_info, prefix: str) -> str | None:
+                """Stream'i tmp dosyaya indir; adaptive ise ffmpeg ile merge eder."""
+                if stream_info is None:
+                    return None
+
+                if stream_info[0] == "adaptive":
+                    _, v_stream, a_stream = stream_info
+                    v_tmp = tempfile.NamedTemporaryFile(suffix="_v.mp4", delete=False, prefix=prefix)
+                    v_tmp.close()
+                    a_tmp = tempfile.NamedTemporaryFile(suffix="_a.m4a", delete=False, prefix=prefix)
+                    a_tmp.close()
+                    out_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix=prefix)
+                    out_tmp.close()
+                    try:
+                        v_stream.download(output_path=os.path.dirname(v_tmp.name),
+                                          filename=os.path.basename(v_tmp.name))
+                        a_stream.download(output_path=os.path.dirname(a_tmp.name),
+                                          filename=os.path.basename(a_tmp.name))
+                        r = subprocess.run(
+                            ["ffmpeg", "-y", "-i", v_tmp.name, "-i", a_tmp.name,
+                             "-c:v", "copy", "-c:a", "aac", "-shortest", out_tmp.name],
+                            capture_output=True, timeout=120
+                        )
+                        if r.returncode == 0 and os.path.getsize(out_tmp.name) > 10000:
+                            return out_tmp.name
+                    finally:
+                        for p in (v_tmp.name, a_tmp.name):
+                            try:
+                                os.unlink(p)
+                            except OSError:
+                                pass
+                    return None
+
+                # Progressive
+                _, stream = stream_info
+                tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix=prefix)
+                tmp.close()
+                stream.download(output_path=os.path.dirname(tmp.name),
+                                filename=os.path.basename(tmp.name))
+                if os.path.exists(tmp.name) and os.path.getsize(tmp.name) > 10000:
+                    return tmp.name
                 try:
                     os.unlink(tmp.name)
                 except OSError:
                     pass
-                if result.stderr:
-                    err_lines = [l for l in result.stderr.splitlines()
-                                 if 'UserWarning' not in l and 'cookiejar' not in l.lower()
-                                 and 'warnings.warn' not in l and l.strip()]
-                    if err_lines:
-                        err_msg = '\n'.join(err_lines[-3:])
-                        print(f"[video_builder] yt-dlp hata: {err_msg[:500]}")
+                return None
+
+            def _try_pytubefix_plain(vid_id: str) -> str | None:
+                """pytubefix auth'suz — ANDROID_VR ile dener, 40s timeout."""
+                try:
+                    from pytubefix import YouTube as PTYouTube
+                except ImportError:
+                    return None
+                import concurrent.futures as _cf
+                _url = f"https://www.youtube.com/watch?v={vid_id}"
+                for client in _PTF_CLIENTS:
+                    tag = f"ptf/{client}"
+                    print(f"[video_builder] YouTube CC: '{query}' → {vid_id} [{tag}]...")
+                    def _attempt(url=_url, c=client):
+                        yt_obj = PTYouTube(url, client=c, proxies=_ptf_proxies)
+                        s = _pick_stream(yt_obj)
+                        if not s:
+                            return None
+                        return _download_stream(s, "ytcc_ptf_")
+                    try:
+                        with _cf.ThreadPoolExecutor(max_workers=1) as ex:
+                            fut = ex.submit(_attempt)
+                            path = fut.result(timeout=40)
+                        if path:
+                            print(f"[video_builder]   {vid_id} [{tag}] ✓")
+                            return path
+                        print(f"[video_builder]   {vid_id} [{tag}] stream yok")
+                    except _cf.TimeoutError:
+                        print(f"[video_builder]   {vid_id} [{tag}] timeout (40s)")
+                    except Exception as e:
+                        print(f"[video_builder]   {vid_id} [{tag}] başarısız: "
+                              f"{str(e)[:100]}")
+                return None
+
+            def _try_ytdlp_cookies(vid_id: str) -> str | None:
+                """yt-dlp + cookies (son çare)."""
+                if not cookie_file:
+                    return None
+                _url = f"https://www.youtube.com/watch?v={vid_id}"
+                for _client, _skip in _YTDLP_CLIENTS:
+                    tmp = tempfile.NamedTemporaryFile(
+                        suffix=".mp4", delete=False, prefix="ytcc_dlp_")
+                    tmp.close()
+                    _yt_args: dict = {"player_client": _client}
+                    if _skip:
+                        _yt_args["player_skip"] = _skip
+                    dl_opts = {
+                        "format": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best",
+                        "format_sort": ["res:1080", "codec:h264"],
+                        "outtmpl": tmp.name,
+                        "merge_output_format": "mp4",
+                        "max_filesize": 150 * 1024 * 1024,
+                        "quiet": True, "no_warnings": True,
+                        "logger": _SilentLogger(),
+                        "check_formats": False,
+                        "no_check_certificate": True,
+                        "socket_timeout": 20,      # bağlantı başına 20s
+                        "retries": 1,              # tek retry
+                        "cookiefile": cookie_file,
+                        "extractor_args": {"youtube": _yt_args},
+                        **({"proxy": YT_PROXY} if YT_PROXY else {}),
+                    }
+                    tag = f"yt-dlp/{_client[0]}"
+                    print(f"[video_builder] YouTube CC: '{query}' → {vid_id} [{tag}]...")
+                    try:
+                        with _ytdlp.YoutubeDL(dl_opts) as ydl:
+                            ydl.extract_info(_url, download=True)
+                    except Exception as e:
+                        print(f"[video_builder]   {vid_id} [{tag}] başarısız: "
+                              f"{str(e)[:100]}")
+                        try:
+                            os.unlink(tmp.name)
+                        except OSError:
+                            pass
+                        continue
+                    candidate = tmp.name
+                    for ext in [".mp4", ".webm", ".mkv"]:
+                        alt = tmp.name + ext
+                        if os.path.exists(alt) and os.path.getsize(alt) > 10000:
+                            candidate = alt
+                            break
+                    if os.path.exists(candidate) and os.path.getsize(candidate) > 10000:
+                        print(f"[video_builder]   {vid_id} [{tag}] ✓")
+                        return candidate
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+                return None
+
+            # ── Ana indirme döngüsü ──
+            actual_file = None
+            _yt_consecutive_fails = 0
+            for cc_video_id in video_ids:
+                if _yt_consecutive_fails >= 2:
+                    print("[video_builder] YouTube CC: ardarda 2 video başarısız; "
+                          "IP muhtemelen engelli.")
+                    break
+
+                # Segment bazlı tracking: tam video ID'si yoksa atlamıyoruz
+                # (farklı segmentler kullanılabilir — kontrol download sonrası yapılır)
+                if f"ytcc_{cc_video_id}_full" in seen_ids:
+                    continue
+
+                result = (
+                    _try_pytubefix_plain(cc_video_id)
+                    or _try_ytdlp_cookies(cc_video_id)
+                )
+
+                if result:
+                    actual_file = result
+                    _yt_consecutive_fails = 0
+                    break
+                else:
+                    _yt_consecutive_fails += 1
+
+            if not actual_file:
                 continue
 
             # Video süresini al
@@ -523,9 +886,10 @@ def _fetch_youtube_cc_clips(keywords: list, n: int, seen_ids: set) -> list[str]:
                 pass
 
             if cut_result.returncode == 0 and os.path.exists(segment_file.name) and os.path.getsize(segment_file.name) > 5000:
-                vid_id = f"ytcc_{hash(query)}_{len(downloaded)}"
-                if vid_id not in seen_ids:
-                    seen_ids.add(vid_id)
+                # Segment bazlı ID: aynı videodan farklı segmentler kullanılabilir
+                seg_id = f"ytcc_{cc_video_id}_{int(segment_start)}_{int(segment_start + segment_dur)}"
+                if seg_id not in seen_ids:
+                    seen_ids.add(seg_id)
                     downloaded.append(segment_file.name)
                     print(f"[video_builder] YouTube CC klip {len(downloaded)}/{n}: "
                           f"'{query}' [{segment_start:.1f}s-{segment_start+segment_dur:.1f}s]")
@@ -553,44 +917,165 @@ def _fetch_youtube_cc_clips(keywords: list, n: int, seen_ids: set) -> list[str]:
     return downloaded
 
 
+# DVIDS branch tespiti: keyword → askeri kol eşleşmesi
+_DVIDS_BRANCH_MAP = {
+    "Navy":         ["navy", "ship", "carrier", "destroyer", "submarine", "fleet", "frigate",
+                     "cruiser", "amphibious", "naval", "seals", "seal", "maritime"],
+    "Air Force":    ["air force", "fighter jet", "f-35", "f-22", "f-16", "f-15", "b-2", "b-21",
+                     "stealth", "bomber", "aircraft", "airbase", "pilot", "cockpit", "drone",
+                     "uav", "reaper", "predator", "refueling"],
+    "Army":         ["army", "tank", "abrams", "infantry", "soldier", "troops", "artillery",
+                     "howitzer", "ranger", "green beret", "airborne", "convoy", "combat",
+                     "armored", "bradley", "stryker", "humvee"],
+    "Marine Corps": ["marine", "marines", "usmc", "amphibious assault", "expeditionary"],
+    "Space Force":  ["space force", "satellite", "gps", "orbital", "space"],
+}
+
+# DVIDS topic-aware query şablonları: kategori → spesifik DVIDS arama terimleri
+_DVIDS_TOPIC_QUERIES = {
+    "jets":          ["fighter aircraft operations", "close air support", "combat air patrol",
+                      "aerial refueling", "carrier launch recovery", "air superiority"],
+    "helicopter":    ["rotary wing operations", "helicopter assault", "medevac operations",
+                      "attack helicopter gunnery", "helo fast rope", "air assault"],
+    "tanks":         ["combined arms exercise", "armor operations", "tank gunnery",
+                      "mechanized infantry", "armored brigade combat team", "live fire armor"],
+    "drone":         ["unmanned aerial system", "UAS operations", "surveillance drone",
+                      "remotely piloted aircraft", "drone exercise"],
+    "navy":          ["fleet exercise", "carrier strike group", "amphibious operations",
+                      "naval gunfire support", "submarine operations", "surface warfare"],
+    "special_forces":["special operations", "joint special operations", "counterterrorism exercise",
+                      "unconventional warfare", "direct action", "personnel recovery"],
+    "missiles":      ["missile defense", "patriot battery", "missile exercise",
+                      "air defense artillery", "ballistic missile defense"],
+    "explosions":    ["live fire exercise", "demolition operations", "air strike",
+                      "close air support exercise", "artillery live fire", "bomb drop"],
+    "training":      ["combat training", "joint exercise", "multinational exercise",
+                      "readiness exercise", "military training"],
+    "misc":          ["military readiness", "joint operation", "deployment exercise",
+                      "expeditionary operations", "force projection"],
+}
+
+
+def _keyword_hits(text: str, keywords: list[str]) -> int:
+    """Metnin içinde kaç keyword geçtiğini döndürür. Relevance sıralaması için kullanılır."""
+    if not text or not keywords:
+        return 0
+    text_l = text.lower()
+    return sum(1 for kw in keywords if kw.lower() in text_l)
+
+
+# Tören / brifing / röportaj içeriklerini dışla — video montajına görsel olarak uygunsuz
+_NON_ACTION_TERMS = {
+    # Tören / protokol
+    "briefing", "press briefing", "press conference", "interview",
+    "ceremony", "change of command", "retirement", "promotion ceremony",
+    "award ceremony", "ribbon cutting", "speech", "remarks", "town hall",
+    "graduation", "commencement", "visit", "tour", "meet and greet",
+    "signing ceremony", "memorandum", "commemoration", "memorial service",
+    "wreath laying", "flag ceremony", "press event", "media day",
+    "roundtable", "symposium", "summit", "welcome ceremony", "farewell",
+    "promotion", "swearing", "oath of office", "congressional",
+    "senator", "secretary of defense", "chief of staff", "pentagon",
+    "news conference", "media roundtable", "official visit", "dignitary",
+    # Haber / yayın — lower-thirds ve chyron içerir
+    "news report", "news story", "broadcast", "reporter", "anchor",
+    "correspondent", "newscast", "on camera", "on-camera", "stand-up",
+    "package", "live report", "public affairs", "pa product",
+    "media embed", "embedded media", "press pool",
+}
+
+
+def _is_action_footage(title: str) -> bool:
+    """True dönerse klip aksiyon/eğitim görüntüsüdür. False ise tören/röportaj/brifing."""
+    title_l = title.lower()
+    return not any(term in title_l for term in _NON_ACTION_TERMS)
+
+
+def _detect_dvids_branch(keywords: list) -> str | None:
+    """Keyword listesinden en uygun DVIDS askeri kolunu tespit eder."""
+    kw_text = " ".join(keywords).lower()
+    branch_scores = {}
+    for branch, hints in _DVIDS_BRANCH_MAP.items():
+        score = sum(1 for h in hints if h in kw_text)
+        if score > 0:
+            branch_scores[branch] = score
+    if not branch_scores:
+        return None
+    return max(branch_scores, key=branch_scores.get)
+
+
+def _build_dvids_queries(keywords: list) -> list[str]:
+    """Script keyword'lerinden öncelikli DVIDS sorgu listesi üretir."""
+    queries = []
+
+    # 1) Spesifik: keyword'leri birleştir (en alakalı)
+    if len(keywords) >= 2:
+        queries.append(" ".join(keywords[:2]))
+    if len(keywords) >= 3:
+        queries.append(" ".join(keywords[:3]))
+
+    # 2) Kategori bazlı topic query'ler
+    category = _pick_yt_category(keywords)
+    topic_queries = list(_DVIDS_TOPIC_QUERIES.get(category, _DVIDS_TOPIC_QUERIES["misc"]))
+    random.shuffle(topic_queries)
+    queries.extend(topic_queries[:4])
+
+    # 3) Tek tek keyword'ler
+    for kw in keywords[:5]:
+        if kw not in queries:
+            queries.append(kw)
+
+    # 4) Kategori bazlı action-only fallback — tören/brifing değil, aksiyon içerikleri
+    # _DVIDS_TOPIC_QUERIES'den seçilen topic_queries zaten bunu kapsar (yukarıda eklendi)
+    # Genel "military deployment / force readiness" gibi sorgular tören döndürebilirdi — kaldırıldı
+
+    return queries
+
+
 def _fetch_dvids_clips(keywords: list, api_key: str, n: int, seen_ids: set) -> list:
-    """DVIDS'ten (ABD Savunma Bakanlığı) gerçek askeri video indirir. Public Domain."""
+    """DVIDS'ten (ABD Savunma Bakanlığı) gerçek askeri video indirir. Public Domain.
+
+    İyileştirmeler:
+    - sort=date (en yeni önce)
+    - date_from = 3 yıl öncesi (eski arşiv videoları hariç)
+    - branch otomatik tespiti (Navy / Army / Air Force vb.)
+    - Konu-bağlı akıllı query üretimi
+    - max_results 25 → 50
+    """
     if not shutil.which("ffmpeg"):
         print("[video_builder] ffmpeg bulunamadı, DVIDS atlanıyor.")
         return []
 
+    date_from = (datetime.now() - timedelta(days=3 * 365)).strftime("%Y-%m-%d")
+    queries = _build_dvids_queries(keywords)
     downloaded = []
-    queries = []
-    if len(keywords) >= 2:
-        queries.append(" ".join(keywords[:2]))
-    for kw in keywords[:4]:
-        queries.append(kw)
-
-    # Askeri fallback sorguları
-    military_fallbacks = [
-        "military exercise", "fighter jet", "aircraft carrier",
-        "special operations", "drone strike", "naval operations",
-    ]
-    random.shuffle(military_fallbacks)
-    queries.extend(military_fallbacks[:3])
 
     for query in queries:
         if len(downloaded) >= n:
             break
+
         params = {
             "q": query,
-            "max_results": 10,
+            "max_results": 50,
+            "type": "video",
+            "sort": "date",
+            "date_from": date_from,
             "api_key": api_key,
         }
+
         try:
             resp = requests.get(DVIDS_API, params=params, timeout=20)
             resp.raise_for_status()
             results = resp.json().get("results", [])
-            random.shuffle(results)
+
+            # Keyword relevance'a göre sırala: en alakalı önce indirilir
+            results.sort(
+                key=lambda a: _keyword_hits(a.get("title", ""), keywords),
+                reverse=True,
+            )
             for asset in results:
                 if len(downloaded) >= n:
                     break
-                # Sadece video
                 if asset.get("type") != "video":
                     continue
                 vid = f"dvids_{asset.get('id')}"
@@ -600,20 +1085,33 @@ def _fetch_dvids_clips(keywords: list, api_key: str, n: int, seen_ids: set) -> l
                 hls_url = asset.get("hls_url")
                 if not hls_url:
                     continue
-                # HLS → MP4 (ffmpeg subprocess)
+
+                title = asset.get("title", "")
+                # Röportaj / tören / brifing içeriklerini atla
+                if not _is_action_footage(title):
+                    print(f"[video_builder] DVIDS atlandı (tören/brifing): '{title[:60]}'")
+                    continue
+
+                title = title[:60]
                 try:
                     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix="dvids_")
                     tmp.close()
                     cmd = [
-                        "ffmpeg", "-y", "-i", hls_url,
-                        "-c", "copy", "-t", "30",  # max 30 saniye
+                        "ffmpeg", "-y",
+                        "-ss", "8",           # ilk 8sn atla (DVIDS slate + açılış lower-third)
+                        "-i", hls_url,
+                        # Alt %12'yi kes (lower-thirds / isim-rütbe barları), orijinal boyuta scale et
+                        "-vf", "crop=iw:trunc(ih*0.88/2)*2:0:0,scale=iw:ih",
+                        "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+                        "-an",               # ses yok (B-roll)
+                        "-t", "30",           # max 30 saniye
                         "-loglevel", "error",
                         tmp.name,
                     ]
                     result = subprocess.run(cmd, timeout=60, capture_output=True)
                     if result.returncode == 0 and os.path.getsize(tmp.name) > 10000:
                         downloaded.append(tmp.name)
-                        print(f"[video_builder] DVIDS klip {len(downloaded)}/{n} (id:{vid})")
+                        print(f"[video_builder] DVIDS klip {len(downloaded)}/{n}: '{title}'")
                     else:
                         os.unlink(tmp.name)
                 except (subprocess.TimeoutExpired, Exception) as e:
@@ -623,138 +1121,864 @@ def _fetch_dvids_clips(keywords: list, api_key: str, n: int, seen_ids: set) -> l
                     except OSError:
                         pass
         except Exception as e:
-            print(f"[video_builder] DVIDS arama hatası ({query}): {e}")
+            print(f"[video_builder] DVIDS arama hatası ({query!r}): {e}")
 
     return downloaded
 
 
+# Archive.org askeri koleksiyonları — yeniden eskiye öncelik sırası
+_ARCHIVE_MILITARY_COLLECTIONS = [
+    "defense_visual_information",  # DVIDS arşivi — en güncel, HD
+    "usnavyfilms",                 # ABD Deniz Kuvvetleri
+    "usarmyfilms",                 # ABD Ordusu
+    "usmcarchive",                 # ABD Deniz Piyadesi
+    "usmilitaryfilms",             # Genel ABD askeri
+    "usgovfilms",                  # Genel ABD hükümeti
+]
+
+# Keyword → Archive koleksiyon tercihi
+_ARCHIVE_BRANCH_COLLECTIONS = {
+    "navy":    ["usnavyfilms", "defense_visual_information"],
+    "army":    ["usarmyfilms", "defense_visual_information"],
+    "marine":  ["usmcarchive", "defense_visual_information"],
+    "air":     ["defense_visual_information", "usgovfilms"],
+    "default": _ARCHIVE_MILITARY_COLLECTIONS,
+}
+
+
+def _pick_archive_collections(keywords: list) -> list[str]:
+    """Keyword'lere göre öncelikli Archive koleksiyon listesi döndürür."""
+    kw_text = " ".join(keywords).lower()
+    if any(w in kw_text for w in ["navy", "naval", "ship", "carrier", "submarine", "seal"]):
+        return _ARCHIVE_BRANCH_COLLECTIONS["navy"]
+    if any(w in kw_text for w in ["marine", "usmc", "amphibious"]):
+        return _ARCHIVE_BRANCH_COLLECTIONS["marine"]
+    if any(w in kw_text for w in ["army", "tank", "infantry", "soldier", "ranger"]):
+        return _ARCHIVE_BRANCH_COLLECTIONS["army"]
+    if any(w in kw_text for w in ["jet", "aircraft", "bomber", "pilot", "air force"]):
+        return _ARCHIVE_BRANCH_COLLECTIONS["air"]
+    return _ARCHIVE_BRANCH_COLLECTIONS["default"]
+
+
+def _score_archive_file(name: str, size: int) -> int:
+    """MP4 dosyasını kalite/güncellik puanı ile değerlendirir. Yüksek = tercih edilir."""
+    score = 0
+    name_l = name.lower()
+    # HD indikatörleri
+    if "1080" in name_l:
+        score += 40
+    if "720" in name_l:
+        score += 25
+    if "_hd" in name_l or "-hd" in name_l or "hd." in name_l:
+        score += 20
+    if "h264" in name_l or "x264" in name_l or "h.264" in name_l:
+        score += 10
+    # Dosya büyüklüğü: her 10MB için +5 puan (max 50 puan)
+    score += min(50, (size // (10 * 1024 * 1024)) * 5)
+    return score
+
+
 def _fetch_archive_clips(keywords: list, n: int, seen_ids: set) -> list:
-    """Internet Archive'dan Public Domain askeri video indirir. API key gereksiz."""
+    """Internet Archive'dan Public Domain askeri video indirir. API key gereksiz.
+
+    İyileştirmeler:
+    - sort=publicdate desc (en yeni önce)
+    - date:[2010-01-01 TO *] filtresi (eski çekim görüntüleri dışla)
+    - 6 askeri koleksiyona genişletildi
+    - HD dosya tercihi (1080 > 720 > hd > büyük boyut)
+    - Minimum 3MB dosya boyutu
+    """
     downloaded = []
+
+    # Sorgu listesi
     queries = []
     if len(keywords) >= 2:
         queries.append(" ".join(keywords[:2]))
-    for kw in keywords[:3]:
-        queries.append(kw)
+    if len(keywords) >= 3:
+        queries.append(" ".join(keywords[:3]))
+    for kw in keywords[:4]:
+        if kw not in queries:
+            queries.append(kw)
 
-    # Koleksiyon bazlı fallback'ler
-    archive_fallbacks = [
-        "military aircraft", "world war", "nuclear test",
-        "navy ships", "military training", "cold war",
-    ]
-    random.shuffle(archive_fallbacks)
-    queries.extend(archive_fallbacks[:2])
+    # Generic fallback sorgular kaldırıldı: tören/brifing döndürebiliyordu
+    # Archive koleksiyonları zaten askeri içeriğe odaklı
 
     headers = {"User-Agent": "WarShorts/1.0 (video asset downloader)"}
+    collections = _pick_archive_collections(keywords)
+    collection_q = " OR ".join(f"collection:{c}" for c in collections)
 
     for query in queries:
         if len(downloaded) >= n:
             break
-        search_q = f"({query}) AND mediatype:movies AND collection:(usgovfilms OR military)"
+
+        search_q = (
+            f"({query}) AND mediatype:movies "
+            f"AND ({collection_q}) "
+            f"AND date:[2010-01-01 TO *]"   # 2010 öncesi dışla
+        )
         params = {
             "q": search_q,
             "output": "json",
-            "rows": 10,
+            "rows": 20,
             "page": 1,
-            "sort[]": "downloads desc",
-            "fl[]": "identifier,title",
+            "sort[]": "publicdate desc",    # En yeni önce
+            "fl[]": ["identifier", "title", "publicdate"],
         }
         try:
             resp = requests.get(ARCHIVE_API, params=params, timeout=20, headers=headers)
             resp.raise_for_status()
             docs = resp.json().get("response", {}).get("docs", [])
-            random.shuffle(docs)
+            # Relevance'a göre sırala (keyword match > 0 olanlar önce)
+            docs.sort(
+                key=lambda d: _keyword_hits(
+                    (d.get("title") if isinstance(d.get("title"), str)
+                     else " ".join(d.get("title") or [])),
+                    keywords,
+                ),
+                reverse=True,
+            )
+
             for doc in docs:
                 if len(downloaded) >= n:
                     break
                 identifier = doc.get("identifier")
                 if not identifier:
                     continue
+
+                # Metadata çekmeden önce title ile hızlı relevance + aksiyon kontrolü
+                raw_title = doc.get("title") or ""
+                title_str = raw_title if isinstance(raw_title, str) else " ".join(raw_title)
+                if not _is_action_footage(title_str):
+                    continue  # Tören/brifing/röportaj — atla
+                if _keyword_hits(title_str, keywords) == 0 and len(downloaded) > 0:
+                    # Zaten yeterli relevantlı klip varsa alakasızları atla
+                    continue
+
                 vid = f"archive_{identifier}"
                 if vid in seen_ids:
                     continue
                 seen_ids.add(vid)
-                # Metadata'dan mp4 dosyası bul
+
                 try:
                     meta_url = f"https://archive.org/metadata/{identifier}"
                     meta_resp = requests.get(meta_url, timeout=15, headers=headers)
                     meta_resp.raise_for_status()
                     files = meta_resp.json().get("files", [])
-                    # mp4 dosyası ara (boyut < 50MB)
-                    mp4_file = None
+
+                    # MP4 adaylarını topla ve kalite puanına göre sırala
+                    candidates = []
                     for f in files:
                         name = f.get("name", "")
                         size = int(f.get("size", 0) or 0)
                         fmt = f.get("format", "").lower()
-                        if (name.lower().endswith(".mp4") or "mpeg4" in fmt or "mp4" in fmt) \
-                                and 0 < size < 50 * 1024 * 1024:
-                            mp4_file = name
-                            break
-                    if not mp4_file:
+                        is_mp4 = name.lower().endswith(".mp4") or "mpeg4" in fmt or "mp4" in fmt
+                        # Min 3MB, max 150MB
+                        if is_mp4 and 3 * 1024 * 1024 <= size <= 150 * 1024 * 1024:
+                            candidates.append((name, size, _score_archive_file(name, size)))
+
+                    if not candidates:
                         continue
-                    # İndir
-                    dl_url = f"https://archive.org/download/{identifier}/{mp4_file}"
+
+                    # En yüksek puanlı dosyayı seç
+                    candidates.sort(key=lambda x: x[2], reverse=True)
+                    best_name, best_size, best_score = candidates[0]
+
+                    dl_url = f"https://archive.org/download/{identifier}/{best_name}"
                     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix="archive_")
-                    r = requests.get(dl_url, stream=True, timeout=60, headers=headers)
+                    r = requests.get(dl_url, stream=True, timeout=90, headers=headers)
                     r.raise_for_status()
-                    for chunk in r.iter_content(chunk_size=8192):
+                    for chunk in r.iter_content(chunk_size=65536):
                         tmp.write(chunk)
                     tmp.close()
-                    if os.path.getsize(tmp.name) > 10000:
-                        downloaded.append(tmp.name)
-                        print(f"[video_builder] Archive klip {len(downloaded)}/{n}: {identifier}")
+
+                    pub_date = doc.get("publicdate", "?")[:10]
+                    if os.path.getsize(tmp.name) > 3 * 1024 * 1024:
+                        # Alt %12'yi kes (lower-thirds / haber barları), orijinal boyuta scale et
+                        if shutil.which("ffmpeg"):
+                            cropped = tempfile.NamedTemporaryFile(
+                                suffix=".mp4", delete=False, prefix="archive_crop_"
+                            )
+                            cropped.close()
+                            subprocess.run(
+                                [
+                                    "ffmpeg", "-y", "-i", tmp.name,
+                                    "-vf", "crop=iw:trunc(ih*0.88/2)*2:0:0,scale=iw:ih",
+                                    "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+                                    "-an", "-loglevel", "error", cropped.name,
+                                ],
+                                timeout=120, capture_output=True,
+                            )
+                            os.unlink(tmp.name)
+                            if os.path.exists(cropped.name) and os.path.getsize(cropped.name) > 3 * 1024 * 1024:
+                                downloaded.append(cropped.name)
+                                print(f"[video_builder] Archive klip {len(downloaded)}/{n}: "
+                                      f"{identifier} ({pub_date}, score:{best_score})")
+                            else:
+                                try:
+                                    os.unlink(cropped.name)
+                                except OSError:
+                                    pass
+                        else:
+                            downloaded.append(tmp.name)
+                            print(f"[video_builder] Archive klip {len(downloaded)}/{n}: "
+                                  f"{identifier} ({pub_date}, score:{best_score})")
                     else:
                         os.unlink(tmp.name)
                 except Exception as e:
                     print(f"[video_builder] Archive indirme hatası ({identifier}): {e}")
         except Exception as e:
-            print(f"[video_builder] Archive arama hatası ({query}): {e}")
+            print(f"[video_builder] Archive arama hatası ({query!r}): {e}")
 
     return downloaded
 
 
-def _fetch_clips(keywords: list, n: int = 10) -> list[str]:
+def _fetch_pexels_clips(keywords: list, n: int, seen_ids: set) -> list[str]:
+    """Pexels'ten ücretsiz stock video indirir."""
+    api_key = os.environ.get("PEXELS_API_KEY", "")
+    if not api_key:
+        return []
+    downloaded = []
+    # Sadece gerçek keyword'ler — generic fallback sorgular kaldırıldı
+    queries = keywords[:4]
+    if not queries:
+        return []
+    random.shuffle(queries)
+
+    for query in queries:
+        if len(downloaded) >= n:
+            break
+        try:
+            resp = requests.get(
+                "https://api.pexels.com/videos/search",
+                params={"query": query, "per_page": 15, "orientation": "portrait"},
+                headers={"Authorization": api_key},
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                continue
+            for video in resp.json().get("videos", []):
+                if len(downloaded) >= n:
+                    break
+                vid = f"pexels_{video['id']}"
+                if vid in seen_ids:
+                    continue
+                seen_ids.add(vid)
+                # En iyi mp4 dosyasını bul (720p+)
+                best_file = None
+                for vf in video.get("video_files", []):
+                    if vf.get("file_type") == "video/mp4" and (vf.get("height", 0) >= 720 or not best_file):
+                        best_file = vf
+                if not best_file:
+                    continue
+                try:
+                    tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix="pexels_")
+                    tmp.close()
+                    r = requests.get(best_file["link"], timeout=60, stream=True)
+                    r.raise_for_status()
+                    with open(tmp.name, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 256):
+                            f.write(chunk)
+                    if os.path.getsize(tmp.name) > 10000:
+                        downloaded.append(tmp.name)
+                        print(f"[video_builder] Pexels klip {len(downloaded)}/{n} (id:{vid})")
+                    else:
+                        os.unlink(tmp.name)
+                except Exception:
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+        except Exception as e:
+            print(f"[video_builder] Pexels arama hatası ({query}): {e}")
+    return downloaded
+
+
+def _fetch_pixabay_clips(keywords: list, n: int, seen_ids: set) -> list[str]:
+    """Pixabay'dan ücretsiz stock video indirir."""
+    api_key = os.environ.get("PIXABAY_API_KEY", "")
+    if not api_key:
+        return []
+    downloaded = []
+    # Sadece gerçek keyword'ler — generic fallback sorgular kaldırıldı
+    queries = keywords[:4]
+    if not queries:
+        return []
+    random.shuffle(queries)
+
+    for query in queries:
+        if len(downloaded) >= n:
+            break
+        try:
+            resp = requests.get(
+                "https://pixabay.com/api/videos/",
+                params={"key": api_key, "q": query, "per_page": 15},
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                continue
+            for hit in resp.json().get("hits", []):
+                if len(downloaded) >= n:
+                    break
+                vid = f"pixabay_{hit['id']}"
+                if vid in seen_ids:
+                    continue
+                seen_ids.add(vid)
+                # medium veya large video URL
+                video_url = None
+                for size in ["medium", "large", "small"]:
+                    vdata = hit.get("videos", {}).get(size, {})
+                    if vdata.get("url"):
+                        video_url = vdata["url"]
+                        break
+                if not video_url:
+                    continue
+                try:
+                    tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix="pixabay_")
+                    tmp.close()
+                    r = requests.get(video_url, timeout=60, stream=True)
+                    r.raise_for_status()
+                    with open(tmp.name, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 256):
+                            f.write(chunk)
+                    if os.path.getsize(tmp.name) > 10000:
+                        downloaded.append(tmp.name)
+                        print(f"[video_builder] Pixabay klip {len(downloaded)}/{n} (id:{vid})")
+                    else:
+                        os.unlink(tmp.name)
+                except Exception:
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+        except Exception as e:
+            print(f"[video_builder] Pixabay arama hatası ({query}): {e}")
+    return downloaded
+
+
+def _fetch_wikimedia_clips(keywords: list, n: int, seen_ids: set) -> list[str]:
+    """Wikimedia Commons'tan video indirir. Klip süresi 3sn ile sınırlı."""
+    downloaded = []
+    # Sadece gerçek keyword'ler — generic military fallback kaldırıldı
+    queries = keywords[:4]
+    if not queries:
+        return []
+    random.shuffle(queries)
+
+    for query in queries:
+        if len(downloaded) >= n:
+            break
+        try:
+            params = {
+                "action": "query",
+                "format": "json",
+                "generator": "search",
+                "gsrsearch": f"{query} filetype:video",
+                "gsrlimit": 10,
+                "prop": "imageinfo",
+                "iiprop": "url|size|mime",
+                "iiurlwidth": 1280,
+            }
+            resp = requests.get("https://commons.wikimedia.org/w/api.php", params=params, timeout=15)
+            if resp.status_code != 200:
+                continue
+            pages = resp.json().get("query", {}).get("pages", {})
+            for page_id, page in pages.items():
+                if len(downloaded) >= n:
+                    break
+                imageinfo = page.get("imageinfo", [{}])[0]
+                mime = imageinfo.get("mime", "")
+                if "video" not in mime:
+                    continue
+                url = imageinfo.get("url", "")
+                if not url:
+                    continue
+                vid = f"wikimedia_{page_id}"
+                if vid in seen_ids:
+                    continue
+                seen_ids.add(vid)
+                try:
+                    tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix="wiki_full_")
+                    tmp.close()
+                    r = requests.get(url, timeout=60, stream=True, headers={"User-Agent": "WarShorts/1.0"})
+                    r.raise_for_status()
+                    with open(tmp.name, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 256):
+                            f.write(chunk)
+                    if os.path.getsize(tmp.name) < 10000:
+                        os.unlink(tmp.name)
+                        continue
+                    # Wikimedia kliplerini 3sn ile sınırla
+                    if shutil.which("ffmpeg"):
+                        seg = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, prefix="wiki_seg_")
+                        seg.close()
+                        # Rastgele başlangıç noktası için süre al
+                        probe = subprocess.run(
+                            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                             "-of", "default=noprint_wrappers=1:nokey=1", tmp.name],
+                            capture_output=True, text=True, timeout=10,
+                        )
+                        try:
+                            dur = float(probe.stdout.strip())
+                        except Exception:
+                            dur = 10.0
+                        start = random.uniform(0, max(0, dur - 3.0))
+                        subprocess.run(
+                            ["ffmpeg", "-y", "-ss", str(start), "-i", tmp.name,
+                             "-t", "3", "-c", "copy", "-loglevel", "error", seg.name],
+                            timeout=15, capture_output=True,
+                        )
+                        os.unlink(tmp.name)
+                        if os.path.exists(seg.name) and os.path.getsize(seg.name) > 5000:
+                            downloaded.append(seg.name)
+                            print(f"[video_builder] Wikimedia klip {len(downloaded)}/{n} (3sn, id:{vid})")
+                        else:
+                            try:
+                                os.unlink(seg.name)
+                            except OSError:
+                                pass
+                    else:
+                        downloaded.append(tmp.name)
+                        print(f"[video_builder] Wikimedia klip {len(downloaded)}/{n} (id:{vid})")
+                except Exception:
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+        except Exception as e:
+            print(f"[video_builder] Wikimedia arama hatası ({query}): {e}")
+    return downloaded
+
+
+def _fetch_wikimedia_images(keywords: list, n: int, seen_ids: set) -> list[str]:
+    """Wikimedia Commons'tan resim (JPG/PNG) indirir."""
+    downloaded = []
+    # Sadece gerçek keyword'ler — generic military fallback kaldırıldı
+    queries = keywords[:4]
+    if not queries:
+        return []
+    random.shuffle(queries)
+
+    for query in queries:
+        if len(downloaded) >= n:
+            break
+        try:
+            params = {
+                "action": "query",
+                "format": "json",
+                "generator": "search",
+                "gsrsearch": f"{query} filetype:bitmap",
+                "gsrlimit": 15,
+                "prop": "imageinfo",
+                "iiprop": "url|size|mime",
+                "iiurlwidth": 1280,
+            }
+            resp = requests.get("https://commons.wikimedia.org/w/api.php", params=params, timeout=15)
+            if resp.status_code != 200:
+                continue
+            pages = resp.json().get("query", {}).get("pages", {})
+            for page_id, page in pages.items():
+                if len(downloaded) >= n:
+                    break
+                imageinfo = page.get("imageinfo", [{}])[0]
+                mime = imageinfo.get("mime", "")
+                if not any(t in mime for t in ("image/jpeg", "image/png", "image/webp")):
+                    continue
+                url = imageinfo.get("url", "")
+                if not url:
+                    continue
+                img_id = f"wiki_img_{page_id}"
+                if img_id in seen_ids:
+                    continue
+                seen_ids.add(img_id)
+                ext = ".jpg" if "jpeg" in mime else ".png"
+                try:
+                    tmp = tempfile.NamedTemporaryFile(suffix=ext, delete=False, prefix="wiki_img_")
+                    tmp.close()
+                    r = requests.get(url, timeout=30, stream=True, headers={"User-Agent": "WarShorts/1.0"})
+                    r.raise_for_status()
+                    with open(tmp.name, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 256):
+                            f.write(chunk)
+                    if os.path.getsize(tmp.name) > 5000:
+                        downloaded.append(tmp.name)
+                        print(f"[video_builder] Wikimedia resim {len(downloaded)}/{n} (id:{img_id})")
+                    else:
+                        os.unlink(tmp.name)
+                except Exception:
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+        except Exception as e:
+            print(f"[video_builder] Wikimedia resim arama hatası ({query}): {e}")
+    return downloaded
+
+
+def _fetch_pexels_images(keywords: list, n: int, seen_ids: set) -> list[str]:
+    """Pexels'ten ücretsiz fotoğraf indirir."""
+    api_key = os.environ.get("PEXELS_API_KEY", "")
+    if not api_key:
+        return []
+    downloaded = []
+    # Sadece gerçek keyword'ler — generic fallback sorgular kaldırıldı
+    queries = keywords[:4]
+    if not queries:
+        return []
+    random.shuffle(queries)
+
+    for query in queries:
+        if len(downloaded) >= n:
+            break
+        try:
+            resp = requests.get(
+                "https://api.pexels.com/v1/search",
+                params={"query": query, "per_page": 15, "orientation": "portrait"},
+                headers={"Authorization": api_key},
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                continue
+            for photo in resp.json().get("photos", []):
+                if len(downloaded) >= n:
+                    break
+                img_id = f"pexels_img_{photo['id']}"
+                if img_id in seen_ids:
+                    continue
+                seen_ids.add(img_id)
+                url = photo.get("src", {}).get("large2x") or photo.get("src", {}).get("large", "")
+                if not url:
+                    continue
+                try:
+                    tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False, prefix="pexels_img_")
+                    tmp.close()
+                    r = requests.get(url, timeout=30, stream=True)
+                    r.raise_for_status()
+                    with open(tmp.name, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 256):
+                            f.write(chunk)
+                    if os.path.getsize(tmp.name) > 5000:
+                        downloaded.append(tmp.name)
+                        print(f"[video_builder] Pexels resim {len(downloaded)}/{n} (id:{img_id})")
+                    else:
+                        os.unlink(tmp.name)
+                except Exception:
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+        except Exception as e:
+            print(f"[video_builder] Pexels resim arama hatası ({query}): {e}")
+    return downloaded
+
+
+def _fetch_aljazeera_images(keywords: list, n: int, seen_ids: set) -> list[str]:
+    """Al Jazeera Creative Commons'tan resim indirir."""
+    downloaded = []
+    # Sadece gerçek keyword'ler — generic fallback sorgular kaldırıldı (alakasız resim çekiyordu)
+    queries = keywords[:3]
+    if not queries:
+        return []
+
+    for query in queries:
+        if len(downloaded) >= n:
+            break
+        try:
+            # Al Jazeera CC arama API'si
+            resp = requests.get(
+                "https://creativecommons.aljazeera.net/search",
+                params={"q": query, "limit": 20, "offset": 0},
+                headers={
+                    "User-Agent": "WarShorts/1.0",
+                    "Accept": "application/json, text/html",
+                },
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                continue
+
+            # JSON yanıt denemesi
+            try:
+                data = resp.json()
+                results = data.get("results") or data.get("images") or data.get("hits") or []
+                if isinstance(results, dict):
+                    results = results.get("hits") or []
+            except Exception:
+                results = []
+
+            # HTML yanıt — og:image ve data-src URL'lerini regex ile çek
+            if not results:
+                import re as _re
+                urls_found = _re.findall(
+                    r'https://[^\s"\'<>]+\.(?:jpg|jpeg|png|webp)[^\s"\'<>]*',
+                    resp.text,
+                )
+                # Sadece Al Jazeera CDN URL'leri
+                urls_found = [u for u in urls_found if "aljazeera" in u or "ajenglish" in u]
+                for url in urls_found:
+                    if len(downloaded) >= n:
+                        break
+                    img_id = f"aljazeera_{hash(url)}"
+                    if img_id in seen_ids:
+                        continue
+                    seen_ids.add(img_id)
+                    try:
+                        tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False, prefix="aje_img_")
+                        tmp.close()
+                        r = requests.get(url, timeout=30, stream=True,
+                                         headers={"User-Agent": "WarShorts/1.0"})
+                        r.raise_for_status()
+                        with open(tmp.name, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=1024 * 256):
+                                f.write(chunk)
+                        if os.path.getsize(tmp.name) > 5000:
+                            downloaded.append(tmp.name)
+                            print(f"[video_builder] Al Jazeera resim {len(downloaded)}/{n}")
+                        else:
+                            os.unlink(tmp.name)
+                    except Exception:
+                        try:
+                            os.unlink(tmp.name)
+                        except OSError:
+                            pass
+                continue
+
+            for item in results:
+                if len(downloaded) >= n:
+                    break
+                url = (item.get("url") or item.get("image_url") or
+                       item.get("src") or item.get("thumbnail") or "")
+                if not url:
+                    continue
+                # Title/description relevance kontrolü — alakasız haberleri filtrele
+                item_text = " ".join(filter(None, [
+                    item.get("title") or "",
+                    item.get("description") or "",
+                    item.get("caption") or "",
+                ]))
+                if item_text and _keyword_hits(item_text, keywords) == 0:
+                    continue
+                img_id = f"aljazeera_{item.get('id', hash(url))}"
+                if img_id in seen_ids:
+                    continue
+                seen_ids.add(img_id)
+                try:
+                    tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False, prefix="aje_img_")
+                    tmp.close()
+                    r = requests.get(url, timeout=30, stream=True,
+                                     headers={"User-Agent": "WarShorts/1.0"})
+                    r.raise_for_status()
+                    with open(tmp.name, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 256):
+                            f.write(chunk)
+                    if os.path.getsize(tmp.name) > 5000:
+                        downloaded.append(tmp.name)
+                        print(f"[video_builder] Al Jazeera resim {len(downloaded)}/{n} (id:{img_id})")
+                    else:
+                        os.unlink(tmp.name)
+                except Exception:
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+        except Exception as e:
+            print(f"[video_builder] Al Jazeera resim arama hatası ({query}): {e}")
+    return downloaded
+
+
+def _fetch_unsplash_images(keywords: list, n: int, seen_ids: set) -> list[str]:
+    """Unsplash'tan ücretsiz resim indirir (UNSPLASH_ACCESS_KEY gerekli)."""
+    access_key = os.environ.get("UNSPLASH_ACCESS_KEY", "")
+    if not access_key:
+        print("[video_builder] UNSPLASH_ACCESS_KEY bulunamadı, Unsplash atlanıyor.")
+        return []
+    downloaded = []
+    # Sadece gerçek keyword'ler — generic fallback sorgular kaldırıldı
+    queries = keywords[:4]
+    if not queries:
+        return []
+    random.shuffle(queries)
+
+    for query in queries:
+        if len(downloaded) >= n:
+            break
+        try:
+            resp = requests.get(
+                "https://api.unsplash.com/search/photos",
+                params={"query": query, "per_page": 15, "orientation": "portrait"},
+                headers={"Authorization": f"Client-ID {access_key}"},
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                continue
+            for photo in resp.json().get("results", []):
+                if len(downloaded) >= n:
+                    break
+                img_id = f"unsplash_{photo['id']}"
+                if img_id in seen_ids:
+                    continue
+                seen_ids.add(img_id)
+                # En yüksek çözünürlüklü portrait URL
+                url = photo.get("urls", {}).get("regular") or photo.get("urls", {}).get("full", "")
+                if not url:
+                    continue
+                try:
+                    tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False, prefix="unsplash_img_")
+                    tmp.close()
+                    r = requests.get(url, timeout=30, stream=True)
+                    r.raise_for_status()
+                    with open(tmp.name, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 256):
+                            f.write(chunk)
+                    if os.path.getsize(tmp.name) > 5000:
+                        downloaded.append(tmp.name)
+                        print(f"[video_builder] Unsplash resim {len(downloaded)}/{n} (id:{img_id})")
+                    else:
+                        os.unlink(tmp.name)
+                except Exception:
+                    try:
+                        os.unlink(tmp.name)
+                    except OSError:
+                        pass
+        except Exception as e:
+            print(f"[video_builder] Unsplash resim arama hatası ({query}): {e}")
+    return downloaded
+
+
+def _fetch_images(keywords: list, seen_ids: set | None = None) -> list[str]:
+    """Keyword'lere göre alakalı resimler indirir.
+
+    Sadece Wikimedia Commons — keyword araması, lisanslı, metin/logo içermez.
+    seen_ids paylaşılırsa aynı resim farklı sahneler için iki kez indirilmez.
     """
-    YouTube CC + DVIDS + Archive'dan video klip indirir.
-    Returns: list of file paths (sadece video, tuple yok).
+    if seen_ids is None:
+        seen_ids = set()
+    images: list[str] = []
+    target = 5  # Sahne başına max 5 (3'ü kullanılacak)
+
+    try:
+        wiki_imgs = _fetch_wikimedia_images(keywords, target, seen_ids)
+        images.extend(wiki_imgs)
+        if wiki_imgs:
+            print(f"[video_builder] Wikimedia resim: {len(wiki_imgs)}")
+    except Exception as e:
+        print(f"[video_builder] Wikimedia resim hatası: {e}")
+
+    return images
+
+
+SEEN_IDS_FILE = os.path.join("output", "seen_clip_ids.json")
+
+
+_SEEN_IDS_WINDOW_DAYS = 60  # Bu kadar günden eski ID'ler tekrar kullanılabilir
+
+
+def _load_seen_ids() -> set:
+    """Kullanılan klip ID'lerini yükler; 60 günden eski kayıtları filtreler."""
+    try:
+        with open(SEEN_IDS_FILE, "r") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return set()
+
+    # Eski format: liste → dict'e çevir (tarihsiz kayıtlar bugünden itibaren sayılır)
+    if isinstance(data, list):
+        today = date.today().isoformat()
+        data = {k: today for k in data}
+
+    cutoff = (date.today() - timedelta(days=_SEEN_IDS_WINDOW_DAYS)).isoformat()
+    return {k for k, v in data.items() if v >= cutoff}
+
+
+def _save_seen_ids(seen_ids: set, existing_data: dict | None = None) -> None:
+    """Kullanılan klip ID'lerini tarih damgasıyla kaydeder."""
+    os.makedirs(os.path.dirname(SEEN_IDS_FILE), exist_ok=True)
+    try:
+        with open(SEEN_IDS_FILE, "r") as f:
+            on_disk = json.load(f)
+            if isinstance(on_disk, list):
+                on_disk = {k: date.today().isoformat() for k in on_disk}
+    except (FileNotFoundError, json.JSONDecodeError):
+        on_disk = {}
+
+    today = date.today().isoformat()
+    for k in seen_ids:
+        if k not in on_disk:
+            on_disk[k] = today
+
+    with open(SEEN_IDS_FILE, "w") as f:
+        json.dump(on_disk, f)
+
+
+def _fetch_clips(keywords: list, n: int = 10, seen_ids: set | None = None, scene_index: int = 0) -> list[str]:
     """
+    YouTube CC + DVIDS + Pexels + Pixabay + Wikimedia + Archive'dan video klip indirir.
+    Paralel fetch: YouTube CC ve Pexels/Pixabay aynı anda çalışır.
+    scene_index: Sahne 0=hook(YouTube+DVIDS önce), 1=mid(Pexels önce), 2=son(Archive dahil)
+    Returns: list of file paths.
+    """
+    import concurrent.futures as _cf_fetch
+
     dvids_key = os.environ.get("DVIDS_API_KEY")
-    seen_ids = set()
+    pexels_key = os.environ.get("PEXELS_API_KEY")
+    pixabay_key = os.environ.get("PIXABAY_API_KEY")
+    if seen_ids is None:
+        seen_ids = _load_seen_ids()
     video_paths = []
 
-    # ─── 1) YouTube CC — ana kaynak ──────────────────────────────────
-    try:
-        yt_clips = _fetch_youtube_cc_clips(keywords, n, seen_ids)
+    def _safe(fn, *args):
+        try:
+            return fn(*args) or []
+        except Exception as e:
+            print(f"[video_builder] {fn.__name__} hatası: {e}")
+            return []
+
+    # ─── Paralel: YouTube CC + Pexels aynı anda ────────────────────────────────
+    with _cf_fetch.ThreadPoolExecutor(max_workers=2) as ex:
+        yt_fut = ex.submit(_safe, _fetch_youtube_cc_clips, keywords, n, seen_ids)
+        if pexels_key and scene_index >= 1:
+            # Orta ve son sahneler: Pexels paralelde çalışsın
+            px_fut = ex.submit(_safe, _fetch_pexels_clips, keywords, n, seen_ids)
+        else:
+            px_fut = None
+
+        yt_clips = yt_fut.result()
+        px_clips = px_fut.result() if px_fut else []
+
+    if scene_index == 0:
+        # Hook sahnesi: gerçek haber görüntüsü önce
         video_paths.extend(yt_clips)
-        print(f"[video_builder] YouTube CC: {len(yt_clips)} klip")
-    except Exception as e:
-        print(f"[video_builder] YouTube CC hatası: {e}")
+        if len(video_paths) < n and dvids_key:
+            video_paths.extend(_safe(_fetch_dvids_clips, keywords, dvids_key, n - len(video_paths), seen_ids))
+        if len(video_paths) < n and pexels_key:
+            video_paths.extend(_safe(_fetch_pexels_clips, keywords, n - len(video_paths), seen_ids))
+    elif scene_index == 1:
+        # Orta sahne: stok + gerçek karışımı
+        half = max(1, n // 2)
+        video_paths.extend(px_clips[:half])
+        video_paths.extend(yt_clips[:n - len(video_paths)])
+        if len(video_paths) < n and pixabay_key:
+            video_paths.extend(_safe(_fetch_pixabay_clips, keywords, n - len(video_paths), seen_ids))
+    else:
+        # Son sahne (2+): YouTube + archive
+        video_paths.extend(yt_clips)
+        if len(video_paths) < n and dvids_key:
+            video_paths.extend(_safe(_fetch_dvids_clips, keywords, dvids_key, n - len(video_paths), seen_ids))
+        if len(video_paths) < n:
+            video_paths.extend(_safe(_fetch_archive_clips, keywords, n - len(video_paths), seen_ids))
 
-    # ─── 2) DVIDS — ek klipler (Public Domain) ──────────────────────
-    if len(video_paths) < n and dvids_key:
-        n_dvids = min(2, n - len(video_paths))
-        try:
-            dvids_clips = _fetch_dvids_clips(keywords, dvids_key, n_dvids, seen_ids)
-            video_paths.extend(dvids_clips)
-            print(f"[video_builder] DVIDS: {len(dvids_clips)} klip")
-        except Exception as e:
-            print(f"[video_builder] DVIDS hatası: {e}")
-
-    # ─── 3) Internet Archive — son çare fallback ─────────────────────
+    # ─── Ortak fallback zinciri (tüm sahneler için) ────────────────────────────
+    if len(video_paths) < n and pixabay_key and scene_index != 1:
+        video_paths.extend(_safe(_fetch_pixabay_clips, keywords, n - len(video_paths), seen_ids))
     if len(video_paths) < n:
-        n_archive = n - len(video_paths)
-        try:
-            archive_clips = _fetch_archive_clips(keywords, n_archive, seen_ids)
-            video_paths.extend(archive_clips)
-            if archive_clips:
-                print(f"[video_builder] Archive fallback: {len(archive_clips)} klip")
-        except Exception as e:
-            print(f"[video_builder] Archive hatası: {e}")
+        video_paths.extend(_safe(_fetch_wikimedia_clips, keywords, n - len(video_paths), seen_ids))
+    if len(video_paths) < n:
+        video_paths.extend(_safe(_fetch_archive_clips, keywords, n - len(video_paths), seen_ids))
 
     if not video_paths:
         raise RuntimeError("Hiç video klip indirilemedi.")
 
-    print(f"[video_builder] Toplam: {len(video_paths)} video klip")
+    print(f"[video_builder] Sahne {scene_index+1} toplam: {len(video_paths)} klip")
+    _save_seen_ids(seen_ids)
     return video_paths[:n]
 
 
@@ -913,13 +2137,17 @@ def _add_film_grain(clip: VideoFileClip, intensity: float) -> VideoFileClip:
 # ─── Çoklu klip montajı + geçişler ───────────────────────────────────────────
 
 def _build_background(clip_paths: list, total_duration: float,
-                      style: StyleProfile) -> VideoFileClip:
+                      style: StyleProfile,
+                      image_paths: list = None) -> VideoFileClip:
     """
     Video klipleri style profile'a göre işler ve birleştirir.
-    clip_paths: list[str] — video dosya yolları.
+    clip_paths: list[str] — video dosya yolları (her biri VIDEO_CLIP_DURATION sn).
+    image_paths: list[str] — araya eklenecek resim dosya yolları (IMAGE_CLIP_DURATION sn).
     """
     processed = []
-    per_clip = total_duration / len(clip_paths)
+    img_pool = list(image_paths) if image_paths else []
+    # Klip ve resim sırası korunur — sahne bazlı alakalılık için karıştırılmaz
+    clip_paths = list(clip_paths)
 
     for i, path in enumerate(clip_paths):
         kb = style.ken_burns_pool[i % len(style.ken_burns_pool)]
@@ -930,11 +2158,11 @@ def _build_background(clip_paths: list, total_duration: float,
             c = _color_grade(c, style.color_grade)
             c = _apply_ken_burns(c, kb)
 
-            # Süre ayarı
-            if c.duration < per_clip:
-                repeats = int(per_clip / c.duration) + 1
+            # Video klip süresini VIDEO_CLIP_DURATION'a sabitle
+            if c.duration < VIDEO_CLIP_DURATION:
+                repeats = int(VIDEO_CLIP_DURATION / c.duration) + 1
                 c = concatenate_videoclips([c] * repeats)
-            c = c.subclip(0, per_clip)
+            c = c.subclip(0, VIDEO_CLIP_DURATION)
         except Exception as e:
             print(f"[video_builder] Klip işleme hatası, atlanıyor: {e}")
             continue
@@ -947,8 +2175,30 @@ def _build_background(clip_paths: list, total_duration: float,
 
         processed.append(c)
 
+        # Video klibinin ardına resim ekle (son klipten sonra da eklenir)
+        if img_pool:
+            img_path = img_pool[i % len(img_pool)]
+            kb_img = style.ken_burns_pool[(i + 1) % len(style.ken_burns_pool)]
+            try:
+                img = Image.open(img_path).convert("RGB")
+                img_arr = np.array(img)
+                img_clip = ImageClip(img_arr).set_duration(IMAGE_CLIP_DURATION)
+                img_clip = _resize_to_shorts(img_clip)
+                img_clip = _color_grade(img_clip, style.color_grade)
+                img_clip = _apply_ken_burns(img_clip, kb_img, intensity=0.05)
+                if style.vignette_intensity > 0:
+                    img_clip = _add_vignette(img_clip, style.vignette_intensity)
+                processed.append(img_clip)
+                print(f"[video_builder] Resim eklendi ({i+1}. video sonrası): {os.path.basename(img_path)}")
+            except Exception as e:
+                print(f"[video_builder] Resim işleme hatası, atlanıyor: {e}")
+
+    if not processed:
+        print("[video_builder] Hiç klip işlenemedi, siyah arka plan kullanılıyor.")
+        return ColorClip(size=(TARGET_W, TARGET_H), color=(0, 0, 0)).set_duration(total_duration)
+
     if len(processed) == 1:
-        return processed[0]
+        return processed[0].set_duration(total_duration) if processed[0].duration < total_duration else processed[0].subclip(0, total_duration)
 
     # Geçiş uygulama
     tt = style.transition_type
@@ -985,7 +2235,8 @@ def _build_background(clip_paths: list, total_duration: float,
 
     # Tam uzunluğa getir
     if bg.duration < total_duration:
-        bg = concatenate_videoclips([bg, bg]).subclip(0, total_duration)
+        n_loops = int(total_duration / bg.duration) + 2
+        bg = concatenate_videoclips([bg] * n_loops).subclip(0, total_duration)
     else:
         bg = bg.subclip(0, total_duration)
 
@@ -994,30 +2245,60 @@ def _build_background(clip_paths: list, total_duration: float,
 
 # ─── Altyazı ─────────────────────────────────────────────────────────────────
 
-def _render_subtitle_image(text: str) -> np.ndarray:
-    font = _load_font(46)
-    dummy = Image.new("RGBA", (1, 1))
-    dd = ImageDraw.Draw(dummy)
-    bbox = dd.textbbox((0, 0), text, font=font)
-    text_w = bbox[2] - bbox[0] + 40
-    text_h = bbox[3] - bbox[1] + 24
+def _render_subtitle_image(text: str, highlight: bool = False) -> np.ndarray:
+    """Tek satır altyazı: beyaz (veya sarı vurgulu) metin + siyah outline, gradient arka plan."""
+    MAX_W = TARGET_W - 80
 
-    img = Image.new("RGBA", (text_w, text_h), (0, 0, 0, 0))
+    # Font boyutunu metne göre otomatik küçült (tek satıra sığdır)
+    for font_size in [80, 68, 58, 50]:
+        font = _load_font_for_text(text, font_size)
+        display = _prepare_text(text)
+        dummy = Image.new("RGBA", (1, 1))
+        dd = ImageDraw.Draw(dummy)
+        bbox = dd.textbbox((0, 0), display, font=font)
+        text_w = bbox[2] - bbox[0]
+        if text_w <= MAX_W:
+            break
+
+    padding_x, padding_y = 28, 16
+    line_h = bbox[3] - bbox[1]
+    img_w = min(text_w + padding_x * 2, TARGET_W)
+    img_h = line_h + padding_y * 2
+
+    img = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    draw.rectangle([(0, 0), (text_w, text_h)], fill=(0, 0, 0, 160))
-    for dx, dy in [(-2, -2), (2, 2), (-2, 2), (2, -2)]:
-        draw.text((20 + dx, 12 + dy), text, font=font, fill=(0, 0, 0, 255))
-    draw.text((20, 12), text, font=font, fill=(255, 255, 255, 255))
+
+    # Gradient arka plan çubuğu — power word'lerde daha koyu/kırmızımsı
+    bg_color = (30, 5, 5) if highlight else (5, 5, 15)
+    for row in range(img_h):
+        bar_alpha = int(200 - (row / max(img_h, 1)) * 80) if highlight else int(170 - (row / max(img_h, 1)) * 70)
+        draw.line([(0, row), (img_w, row)], fill=(*bg_color, bar_alpha))
+
+    text_color = (255, 232, 77, 255) if highlight else (255, 255, 255, 255)  # sarı vs beyaz
+    x = (img_w - text_w) // 2
+    y = padding_y
+    outline = 3
+    for ox, oy in [(-outline, 0), (outline, 0), (0, -outline), (0, outline),
+                   (-outline, -outline), (outline, -outline),
+                   (-outline, outline), (outline, outline)]:
+        draw.text((x + ox, y + oy), display, font=font, fill=(0, 0, 0, 255))
+    draw.text((x, y), display, font=font, fill=text_color)
+
     return np.array(img)
 
+
+_HOOK_DURATION = 3.0  # Hook overlay süresi — altyazı bu süre boyunca bastırılır
 
 def _make_subtitle_clips(chunks: list, total_duration: float) -> list:
     clips = []
     for chunk in chunks:
         start = chunk["start"]
+        # Hook gösterilirken (ilk 3s) altyazı çıkmasın — hook + altyazı çakışması
+        if start < _HOOK_DURATION:
+            start = _HOOK_DURATION
         end = min(chunk["end"], total_duration - CTA_DURATION - 0.1)
         dur = end - start
-        if dur <= 0:
+        if dur <= 0.1:
             continue
         img_arr = _render_subtitle_image(chunk["text"])
         h, w = img_arr.shape[:2]
@@ -1025,15 +2306,48 @@ def _make_subtitle_clips(chunks: list, total_duration: float) -> list:
             ImageClip(img_arr, ismask=False)
             .set_duration(dur)
             .set_start(start)
-            .set_position(((TARGET_W - w) // 2, TARGET_H - h - 320))
+            # %68 → hook ile çakışmaz, YouTube UI butonlarının üzerinde kalır
+            .set_position(((TARGET_W - w) // 2, int(TARGET_H * 0.68)))
         )
+    return clips
+
+
+def _make_word_subtitle_clips(chunks: list, total_duration: float) -> list:
+    """Word-by-word animated subtitles — each word pops up as it is spoken."""
+    clips = []
+    for chunk in chunks:
+        text = chunk["text"].strip()
+        if not text:
+            continue
+        start = chunk["start"]
+        end = min(chunk["end"], total_duration - CTA_DURATION - 0.1)
+        chunk_dur = end - start
+        if chunk_dur <= 0:
+            continue
+        words = text.split()
+        if not words:
+            continue
+        word_dur = chunk_dur / len(words)
+        for i, word in enumerate(words):
+            w_start = start + i * word_dur
+            w_dur = word_dur
+            if w_dur <= 0.05:
+                continue
+            img_arr = _render_subtitle_image(word, highlight=_is_power_word(word))
+            h, w = img_arr.shape[:2]
+            clips.append(
+                ImageClip(img_arr, ismask=False)
+                .set_duration(w_dur)
+                .set_start(w_start)
+                .set_position(((TARGET_W - w) // 2, int(TARGET_H * 0.62)))
+            )
     return clips
 
 
 def _make_fallback_subtitle_clips(narration: str, audio_duration: float) -> list:
     words = narration.split()
     secs_per_word = audio_duration / max(len(words), 1)
-    n = 5
+    n = 4
     chunks = []
     for i in range(0, len(words), n):
         group = words[i:i + n]
@@ -1048,28 +2362,46 @@ def _make_fallback_subtitle_clips(narration: str, audio_duration: float) -> list
 # ─── Hook overlay ────────────────────────────────────────────────────────────
 
 def _make_hook_clip(hook_text: str, duration: float = 3.0) -> ImageClip:
-    font = _load_font(64)
+    font = _load_font_for_text(hook_text, 64)
     max_w = TARGET_W - 80
     words = hook_text.split()
-    lines, current = [], []
+    word_groups, current = [], []
     dummy = Image.new("RGBA", (1, 1))
     dd = ImageDraw.Draw(dummy)
 
     for word in words:
         test = " ".join(current + [word])
-        if dd.textbbox((0, 0), test, font=font)[2] > max_w and current:
-            lines.append(" ".join(current))
+        test_display = _prepare_text(test)
+        if dd.textbbox((0, 0), test_display, font=font)[2] > max_w and current:
+            word_groups.append(" ".join(current))
             current = [word]
         else:
             current.append(word)
     if current:
-        lines.append(" ".join(current))
+        word_groups.append(" ".join(current))
+
+    # Her satırı ayrı ayrı bidi dönüştür
+    lines = [_prepare_text(g) for g in word_groups]
 
     line_h = 76
     h = line_h * len(lines) + 30
-    img = Image.new("RGBA", (TARGET_W, h + 20), (0, 0, 0, 0))
+    total_h = h + 20
+    img = Image.new("RGBA", (TARGET_W, total_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    draw.rectangle([(0, 0), (TARGET_W, h + 20)], fill=(0, 0, 0, 180))
+
+    # Sinematik gradient arka plan: kenarlardan soluklaşır, ortada yoğun
+    for row in range(total_h):
+        progress = row / total_h
+        if progress < 0.12:
+            alpha = int(progress / 0.12 * 165)
+        elif progress > 0.82:
+            alpha = int((1.0 - progress) / 0.18 * 165)
+        else:
+            alpha = 165
+        draw.line([(0, row), (TARGET_W, row)], fill=(0, 0, 0, alpha))
+
+    # Sol kırmızı aksan çizgisi
+    draw.rectangle([(0, 0), (6, total_h)], fill=(220, 30, 30, 230))
 
     for i, line in enumerate(lines):
         bbox = draw.textbbox((0, 0), line, font=font)
@@ -1080,19 +2412,117 @@ def _make_hook_clip(hook_text: str, duration: float = 3.0) -> ImageClip:
             draw.text((x + dx, y + dy), line, font=font, fill=(0, 0, 0, 255))
         draw.text((x, y), line, font=font, fill=(255, 220, 0, 255))
 
+    arr = np.array(img)
+    h_arr, w_arr = arr.shape[:2]
+
+    # Punch-in: 0.35s içinde 1.22x → 1.0x scale (darbe hissi)
+    def _punch_frame(gf, t):
+        frame = gf(t)
+        t_f = float(np.asarray(t).flat[0])
+        if t_f >= 0.35:
+            return frame
+        scale = 1.22 - 0.22 * (t_f / 0.35)
+        fh, fw = frame.shape[:2]
+        new_h, new_w = int(fh * scale), int(fw * scale)
+        resized = np.array(Image.fromarray(frame).resize((new_w, new_h), Image.LANCZOS))
+        x_off = (new_w - fw) // 2
+        y_off = (new_h - fh) // 2
+        return resized[y_off:y_off + fh, x_off:x_off + fw]
+
     return (
-        ImageClip(np.array(img))
+        ImageClip(arr, ismask=False)
         .set_duration(duration)
         .set_start(0)
-        .set_position(("center", 160))
+        .fl(_punch_frame, apply_to='video')
+        .set_position(("center", "center"))
         .crossfadeout(0.5)
     )
 
 
 # ─── CTA bitiş ekranı ────────────────────────────────────────────────────────
 
-def _make_cta_clip(total_duration: float, duration: float = CTA_DURATION) -> list:
+_CTA_TEXTS = {
+    "ar": {
+        "follow":  "تابعنا",
+        "sub":     "للمزيد من التحليلات!",
+        "arrow":   "اضغط متابعة  ^",
+    },
+    "tr": {
+        "follow":  "TAKİP ET",
+        "sub":     "DAHA FAZLASI İÇİN!",
+        "arrow":   "TAKİP ET  ^",
+    },
+    "en": {
+        "follow":  "FOLLOW",
+        "sub":     "FOR MORE WHAT-IFS!",
+        "arrow":   "TAP FOLLOW  ^",
+    },
+}
+
+
+_TEASE_TEXTS = {
+    "en": "WATCH TILL THE END",
+    "tr": "SONA KADAR IZLE",
+    "ar": "شاهد حتى النهاية",
+}
+
+
+def _make_midpoint_tease_clip(total_duration: float, language: str = "en") -> list:
+    """Video ortasında (%42) 2s süren 'izlemeye devam et' overlay'i."""
+    text_raw = _TEASE_TEXTS.get(language, _TEASE_TEXTS["en"])
+    start = total_duration * 0.42
+    dur = 2.0
+    if start + dur >= total_duration - CTA_DURATION:
+        return []
+
+    text = _prepare_text(text_raw)
+    font = _load_font_for_text(text, 52)
+    dummy = Image.new("RGBA", (1, 1))
+    dd = ImageDraw.Draw(dummy)
+    bbox = dd.textbbox((0, 0), text, font=font)
+    tw = bbox[2] - bbox[0]
+    th = bbox[3] - bbox[1]
+    pad_x, pad_y = 32, 18
+    img_w = tw + pad_x * 2
+    img_h = th + pad_y * 2 + 8  # +8 for top accent bar
+
+    img = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # Arka plan: yarı şeffaf kırmızı-siyah
+    for row in range(img_h):
+        alpha = 210 if row > 6 else 255
+        r = 160 if row > 6 else 220
+        draw.line([(0, row), (img_w, row)], fill=(r, 15, 15, alpha))
+
+    # Üst kırmızı aksan çizgisi
+    draw.rectangle([(0, 0), (img_w, 5)], fill=(255, 50, 50, 255))
+
+    # Outline + metin
+    tx, ty = pad_x, pad_y + 6
+    for ox, oy in [(-2, -2), (2, -2), (-2, 2), (2, 2), (0, -2), (0, 2), (-2, 0), (2, 0)]:
+        draw.text((tx + ox, ty + oy), text, font=font, fill=(0, 0, 0, 255))
+    draw.text((tx, ty), text, font=font, fill=(255, 232, 77, 255))
+
+    arr = np.array(img)
+    h, w = arr.shape[:2]
+    x_pos = (TARGET_W - w) // 2
+    y_pos = int(TARGET_H * 0.52)  # ekranın ortasının biraz üstü
+
+    clip = (
+        ImageClip(arr, ismask=False)
+        .set_duration(dur)
+        .set_start(start)
+        .set_position((x_pos, y_pos))
+        .crossfadein(0.2)
+        .crossfadeout(0.2)
+    )
+    return [clip]
+
+
+def _make_cta_clip(total_duration: float, duration: float = CTA_DURATION, language: str = "en") -> list:
     start = total_duration - duration
+    cta = _CTA_TEXTS.get(language, _CTA_TEXTS["en"])
 
     bg = (
         ColorClip(size=(TARGET_W, TARGET_H), color=(0, 0, 0))
@@ -1109,10 +2539,9 @@ def _make_cta_clip(total_duration: float, duration: float = CTA_DURATION) -> lis
         .set_position(("center", TARGET_H // 2 - 100))
     )
 
-    font_big = _load_font(80)
-    font_sub = _load_font(44)
-
-    def _text_img(text, font, color, outline=(0, 0, 0)):
+    def _cta_text_img(raw_text, size, color, outline=(0, 0, 0)):
+        text = _prepare_text(raw_text)
+        font = _load_font_for_text(text, size)
         dummy = Image.new("RGBA", (1, 1))
         dd = ImageDraw.Draw(dummy)
         bbox = dd.textbbox((0, 0), text, font=font)
@@ -1125,7 +2554,7 @@ def _make_cta_clip(total_duration: float, duration: float = CTA_DURATION) -> lis
         draw.text((10, 10), text, font=font, fill=(*color, 255))
         return np.array(img)
 
-    follow_arr = _text_img("FOLLOW", font_big, (255, 220, 0))
+    follow_arr = _cta_text_img(cta["follow"], 80, (255, 220, 0))
     fh, fw = follow_arr.shape[:2]
     follow_clip = (
         ImageClip(follow_arr).set_duration(duration).set_start(start)
@@ -1133,7 +2562,7 @@ def _make_cta_clip(total_duration: float, duration: float = CTA_DURATION) -> lis
         .crossfadein(0.4)
     )
 
-    sub_arr = _text_img("FOR MORE WHAT-IFS!", font_sub, (255, 255, 255))
+    sub_arr = _cta_text_img(cta["sub"], 44, (255, 255, 255))
     sh, sw = sub_arr.shape[:2]
     sub_clip = (
         ImageClip(sub_arr).set_duration(duration).set_start(start)
@@ -1141,7 +2570,7 @@ def _make_cta_clip(total_duration: float, duration: float = CTA_DURATION) -> lis
         .crossfadein(0.5)
     )
 
-    arrow_arr = _text_img("TAP FOLLOW  ^", font_sub, (200, 30, 30))
+    arrow_arr = _cta_text_img(cta["arrow"], 44, (200, 30, 30))
     ah, aw = arrow_arr.shape[:2]
     arrow_clip = (
         ImageClip(arrow_arr).set_duration(duration).set_start(start)
@@ -1156,10 +2585,17 @@ def _make_cta_clip(total_duration: float, duration: float = CTA_DURATION) -> lis
 
 def _make_progress_bar(total_duration: float, bar_h: int = 8) -> VideoClip:
     def make_frame(t):
-        w = int(TARGET_W * min(t / total_duration, 1.0))
+        w_filled = int(TARGET_W * min(t / total_duration, 1.0))
         frame = np.zeros((bar_h, TARGET_W, 3), dtype=np.uint8)
-        if w > 0:
-            frame[:, :w] = [200, 30, 30]
+        for x in range(w_filled):
+            ratio = x / max(w_filled, 1)
+            r = int(120 + ratio * 80)   # koyu kırmızı → parlak kırmızı
+            g = int(10 + ratio * 20)
+            b = int(10 + ratio * 10)
+            frame[:, x] = [r, g, b]
+        # Uç parlaklığı (beyaz glow)
+        if w_filled > 3:
+            frame[:, w_filled - 3:w_filled] = [255, 200, 200]
         return frame
 
     return (
@@ -1198,11 +2634,19 @@ def _make_watermark_clip(total_duration: float) -> ImageClip | None:
 
 # ─── Ses efektleri ───────────────────────────────────────────────────────────
 
+_SFX_VOLUMES = {
+    "hook":   0.65,   # İlk darbe — en güçlü, izleyiciyi kilitler
+    "twist":  0.45,   # Orta bölüm
+    "payoff": 0.55,   # Patlama anı
+    "cta":    0.35,   # Bitti sesi
+}
+
+
 def _build_sfx_audio(audio_duration: float) -> list:
     timings = {
         "hook":   0.1,
-        "twist":  15.0,
-        "payoff": 40.0,
+        "twist":  min(15.0, audio_duration * 0.4),
+        "payoff": max(0, audio_duration - 4.0),
         "cta":    max(0, audio_duration - 0.5),
     }
     sfx_clips = []
@@ -1211,7 +2655,8 @@ def _build_sfx_audio(audio_duration: float) -> list:
         if not path or not os.path.exists(path):
             continue
         try:
-            sfx = AudioFileClip(path).volumex(0.35).set_start(t)
+            vol = _SFX_VOLUMES.get(key, 0.40)
+            sfx = AudioFileClip(path).volumex(vol).set_start(t)
             if t + sfx.duration > audio_duration + CTA_DURATION:
                 sfx = sfx.subclip(0, audio_duration + CTA_DURATION - t)
             sfx_clips.append(sfx)
@@ -1229,6 +2674,7 @@ def build_video(
     audio_path: str,
     vtt_path: str = None,
     output_path: str = "output/short.mp4",
+    seen_ids: set | None = None,
 ) -> str:
     """Script, ses ve VTT'den 1080x1920 Short üretir."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -1236,21 +2682,46 @@ def build_video(
     # Style profile (her video benzersiz görünüm)
     style = _generate_style_profile(script)
 
-    # 1) Çoklu klip indir (YouTube CC + DVIDS + Archive)
-    # search_keywords + title'dan ek keyword'ler çıkar
-    keywords = list(script.get("search_keywords", []))
-    title_words = _extract_title_keywords(script.get("title", ""))
-    for tw in title_words:
-        if tw not in " ".join(keywords).lower():
-            keywords.append(tw)
-    clip_paths = _fetch_clips(keywords, n=10)
+    # 1) Sahne bazlı klip indirme — her sahne kendi keywords'üyle fetch edilir
+    # Bu sayede Sahne 1 görüntüsü Sahne 1 içeriğiyle, Sahne 2 Sahne 2 ile eşleşir
+    if seen_ids is None:
+        seen_ids = _load_seen_ids()
+
+    try:
+        from smart_footage_matcher import get_scene_based_keywords
+        scene_keywords = get_scene_based_keywords(script)  # [[s1_kws], [s2_kws], [s3_kws]]
+        print(f"[video_builder] Sahne bazlı footage matcher aktif: {len(scene_keywords)} sahne")
+    except Exception as e:
+        print(f"[video_builder] Sahne matcher başarısız ({e}), fallback kullanılıyor")
+        fallback_kws = list(script.get("search_keywords", []))
+        title_words = _extract_title_keywords(script.get("title", ""))
+        for tw in title_words:
+            if tw not in " ".join(fallback_kws).lower():
+                fallback_kws.append(tw)
+        scene_keywords = [fallback_kws, fallback_kws, fallback_kws]  # 3 sahne
+
+    # Sahne başına 4 klip × 3 sahne = 12 klip, 2.5s × 12 = 30s → 20s videoyu doldurur
+    clip_paths = []
+    for i, scene_kws in enumerate(scene_keywords[:3]):  # en fazla 3 sahne
+        scene_clips = _fetch_clips(scene_kws, n=4, seen_ids=seen_ids, scene_index=i)
+        clip_paths.extend(scene_clips)
+        first_kw = scene_kws[0][:55] if scene_kws else "—"
+        print(f"[video_builder] Sahne {i+1}: {len(scene_clips)} klip — '{first_kw}'")
+
+    if not clip_paths:
+        raise RuntimeError("Hiç video klip indirilemedi.")
 
     # 2) Ses süresi
     narration_audio = AudioFileClip(audio_path)
+    MAX_SHORTS_DURATION = 20.0  # 20s hedef: yüksek tamamlanma oranı
+    max_narration = MAX_SHORTS_DURATION - CTA_DURATION - 0.3
+    if narration_audio.duration > max_narration:
+        print(f"[video_builder] Narrasyon çok uzun ({narration_audio.duration:.1f}s), {max_narration:.1f}s'ye kırpılıyor.")
+        narration_audio = narration_audio.subclip(0, max_narration)
     total_duration = narration_audio.duration + CTA_DURATION + 0.3
 
-    # 3) Arka plan: çoklu klip + efektler + geçişler
-    bg = _build_background(clip_paths, total_duration, style)
+    # 3) Arka plan: çoklu klip + araya resimler + efektler + geçişler
+    bg = _build_background(clip_paths, total_duration, style, image_paths=[])
 
     # 4) Overlay katmanları
     layers = [bg]
@@ -1264,148 +2735,41 @@ def build_video(
         from tts import parse_vtt
         vtt_chunks = parse_vtt(vtt_path)
         layers.extend(_make_subtitle_clips(vtt_chunks, total_duration))
-        print(f"[video_builder] VTT: {len(vtt_chunks)} altyazı chunk'ı")
+        print(f"[video_builder] VTT: {len(vtt_chunks)} altyazı chunk'ı (cümle-cümle)")
     else:
         layers.extend(_make_fallback_subtitle_clips(script["narration"], narration_audio.duration))
 
-    # ─── Overlay System Entegrasyonu ──────────────────────────────────
+    # ─── Kırmızı alarm flash'ları ─────────────────────────────────────
+    # Harita/bayrak/stat/format overlay'ler kaldırıldı — görsel kargaşa yaratan,
+    # VVSA'yı düşüren gereksiz katmanlar. Sadece 2 adet ince kırmızı flash kaldı.
     try:
-        from overlay_system import (
-            extract_countries_with_timing,
-            extract_statistics_with_timing,
-            create_map_overlay,
-            create_stat_card,
-            download_flag,
-            create_flag_overlay,
-            create_format_overlays,
-            create_red_flash_data,
-            create_glitch_frame,
-        )
-
-        narration_text = script.get("narration", "")
-        video_format = script.get("format", "news_analysis")
-
-        if vtt_chunks:
-            # 1) Harita overlay'leri (max 3 ülke)
-            try:
-                countries = extract_countries_with_timing(narration_text, vtt_chunks)
-                for entry in countries[:3]:
-                    map_arr = create_map_overlay(entry["country"])
-                    if map_arr is not None:
-                        h, w = map_arr.shape[:2]
-                        start = entry["start"]
-                        dur = min(3.5, entry["end"] - entry["start"] + 1.5)
-                        layers.append(
-                            ImageClip(map_arr, ismask=False)
-                            .set_duration(dur)
-                            .set_start(start)
-                            .set_position(("center", 200))
-                            .crossfadein(0.3)
-                            .crossfadeout(0.3)
-                        )
-                        print(f"[video_builder] Harita overlay: {entry['country']} @ {start:.1f}s")
-            except Exception as e:
-                print(f"[video_builder] Harita overlay hatası: {e}")
-
-            # 2) İstatistik kartları (max 4 stat)
-            try:
-                stats = extract_statistics_with_timing(narration_text, vtt_chunks)
-                for entry in stats[:4]:
-                    card_arr = create_stat_card(entry["value"], entry["label"])
-                    h, w = card_arr.shape[:2]
-                    start = entry["start"]
-                    dur = min(2.5, entry["end"] - entry["start"] + 1.0)
-                    layers.append(
-                        ImageClip(card_arr, ismask=False)
-                        .set_duration(dur)
-                        .set_start(start)
-                        .set_position(((TARGET_W - w) // 2, 350))
-                        .crossfadein(0.2)
-                        .crossfadeout(0.2)
-                    )
-                    print(f"[video_builder] Stat kart: {entry['value']} @ {start:.1f}s")
-            except Exception as e:
-                print(f"[video_builder] Stat kart hatası: {e}")
-
-            # 3) Bayrak overlay'leri (max 3 ülke)
-            try:
-                countries_for_flags = extract_countries_with_timing(narration_text, vtt_chunks)
-                for entry in countries_for_flags[:3]:
-                    flag_path = download_flag(entry["country"])
-                    if flag_path:
-                        flag_arr = create_flag_overlay(flag_path)
-                        if flag_arr is not None:
-                            h, w = flag_arr.shape[:2]
-                            start = entry["start"]
-                            dur = min(3.0, entry["end"] - entry["start"] + 1.0)
-                            layers.append(
-                                ImageClip(flag_arr, ismask=False)
-                                .set_duration(dur)
-                                .set_start(start)
-                                .set_position((TARGET_W - w - 30, TARGET_H - h - 350))
-                                .crossfadein(0.2)
-                                .crossfadeout(0.2)
-                            )
-                            print(f"[video_builder] Bayrak overlay: {entry['country']} @ {start:.1f}s")
-            except Exception as e:
-                print(f"[video_builder] Bayrak overlay hatası: {e}")
-
-        # 4) Format bazlı overlay'ler
-        try:
-            title = script.get("title", "")
-            format_overlays = create_format_overlays(video_format, total_duration, title)
-            for ov in format_overlays:
-                if ov["type"] == "glitch":
-                    # Glitch efekti — geçiş anlarında frame bazlı uygulanır
-                    # (bg klibine doğrudan uygulama yapılmaz, karmaşıklık nedeniyle atlat)
-                    continue
-                if ov["data"] is not None:
-                    h, w = ov["data"].shape[:2]
-                    dur = ov["end"] - ov["start"]
-                    if dur <= 0:
-                        continue
-                    pos = ov["position"]
-                    layers.append(
-                        ImageClip(ov["data"], ismask=False)
-                        .set_duration(dur)
-                        .set_start(ov["start"])
-                        .set_position(pos)
-                        .crossfadein(0.2)
-                        .crossfadeout(0.2)
-                    )
-            if format_overlays:
-                print(f"[video_builder] Format overlay'ler ({video_format}): {len(format_overlays)} adet")
-        except Exception as e:
-            print(f"[video_builder] Format overlay hatası: {e}")
-
-        # 5) Kırmızı alarm flash'ları (15sn twist + 40sn payoff)
-        try:
-            flash_times = [15.0, 40.0]
-            flash_dur = 0.3
-            for ft in flash_times:
-                if ft + flash_dur > total_duration:
-                    continue
-                flash_arr = create_red_flash_data()
-                layers.append(
-                    ImageClip(flash_arr, ismask=False)
-                    .set_duration(flash_dur)
-                    .set_start(ft)
-                    .set_position((0, 0))
-                    .crossfadein(0.1)
-                    .crossfadeout(0.15)
-                )
-            print(f"[video_builder] Kırmızı flash @ {[t for t in flash_times if t + flash_dur <= total_duration]}")
-        except Exception as e:
-            print(f"[video_builder] Kırmızı flash hatası: {e}")
-
+        from overlay_system import create_red_flash_data
+        flash_times = [total_duration * 0.30, total_duration * 0.65]
+        flash_dur = 0.25
+        for ft in flash_times:
+            if ft + flash_dur > total_duration - CTA_DURATION:
+                continue
+            flash_arr = create_red_flash_data()
+            layers.append(
+                ImageClip(flash_arr, ismask=False)
+                .set_duration(flash_dur)
+                .set_start(ft)
+                .set_position((0, 0))
+                .crossfadein(0.08)
+                .crossfadeout(0.12)
+            )
     except ImportError:
-        print("[video_builder] overlay_system.py bulunamadı, overlay'ler atlanıyor.")
+        pass
     except Exception as e:
         print(f"[video_builder] Overlay system genel hatası: {e}")
     # ─── Overlay System Sonu ──────────────────────────────────────────
 
+    # Mid-video open-loop tease (%42 noktası)
+    lang = script.get("language", "en")
+    layers.extend(_make_midpoint_tease_clip(total_duration, language=lang))
+
     # CTA bitiş ekranı
-    layers.extend(_make_cta_clip(total_duration))
+    layers.extend(_make_cta_clip(total_duration, language=lang))
 
     # Logo/watermark
     wm = _make_watermark_clip(total_duration)
@@ -1423,11 +2787,22 @@ def build_video(
     audio_tracks = [narration_audio]
     music_path = _pick_music(script)
     if music_path and os.path.exists(music_path):
-        music = AudioFileClip(music_path).volumex(0.135)
+        music = AudioFileClip(music_path).audio_fadein(1.5)  # 1.5s sessizlik sonra giriş
         if music.duration < total_duration:
             from moviepy.audio.fx.audio_loop import audio_loop
             music = audio_loop(music, nloops=int(total_duration / music.duration) + 1)
         music = music.subclip(0, total_duration)
+        # Crescendo: 0.08 → 0.22 (video boyunca gerilim tırmanışı)
+        _td = total_duration
+        def _crescendo(gf, t):
+            frames = gf(t)
+            t_arr = np.asarray(t, dtype=float)
+            vol = 0.08 + 0.14 * np.clip(t_arr / max(_td, 0.1), 0.0, 1.0)
+            if vol.ndim == 0:
+                return frames * float(vol)
+            # t array ise: (n_samples,) → (n_samples, 1) broadcast
+            return frames * vol[:, np.newaxis]
+        music = music.fl(_crescendo, apply_to='audio')
         audio_tracks.append(music)
 
     sfx_clips = _build_sfx_audio(narration_audio.duration)
@@ -1468,8 +2843,10 @@ def build_video(
         audio_codec="aac",
         temp_audiofile=os.path.join(os.path.dirname(output_path), "temp_audio.m4a"),
         remove_temp=True,
-        threads=2,
-        preset="fast",
+        threads=4,
+        preset="slow",
+        ffmpeg_params=["-crf", "17", "-b:a", "192k", "-movflags", "+faststart",
+                       "-profile:v", "high", "-level", "4.1", "-pix_fmt", "yuv420p"],
         verbose=False,
         logger=None,
     )

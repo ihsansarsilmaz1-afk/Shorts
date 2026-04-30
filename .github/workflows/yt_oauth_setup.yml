@@ -1,0 +1,151 @@
+name: YouTube Bağlantı Testi
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: 'Test edilecek video ID (varsayılan: jNQXAC9IVRw)'
+        default: 'jNQXAC9IVRw'
+
+jobs:
+  test-youtube:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Deno (yt-dlp EJS runtime)
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install Python dependencies
+        run: pip install -U "yt-dlp[default]" pytubefix
+
+      - name: Install & start Cloudflare WARP (tam tünel)
+        run: |
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg \
+            | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" \
+            | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update -qq
+          sudo apt-get install -y cloudflare-warp
+
+          sudo systemctl start warp-svc || sudo warp-svc &
+          for i in $(seq 1 10); do
+            if warp-cli --accept-tos status 2>/dev/null | grep -qi "registration\|disconnected\|connected"; then break; fi
+            sleep 2
+          done
+
+          warp-cli --accept-tos registration new 2>/dev/null || true
+          warp-cli --accept-tos mode warp
+          warp-cli --accept-tos connect
+
+          for i in $(seq 1 30); do
+            status=$(warp-cli --accept-tos status 2>/dev/null || echo "unknown")
+            if echo "$status" | grep -qi "^Status update: Connected"; then
+              echo "WARP bağlandı! (${i}. deneme)"
+              break
+            fi
+            echo "  ($i/30) $status"
+            sleep 3
+          done
+
+          result=$(curl -s --max-time 10 https://cloudflare.com/cdn-cgi/trace 2>/dev/null || echo "fail")
+          if echo "$result" | grep -q "warp=on"; then
+            echo "WARP tünel aktif! ✓"
+            echo "$result"
+          else
+            echo "::error::WARP tünel çalışmıyor!"
+            echo "$result"
+            exit 1
+          fi
+
+      - name: IP kontrolü
+        run: |
+          echo "=== Mevcut IP (WARP üzerinden) ==="
+          curl -s https://ipinfo.io 2>/dev/null || true
+
+      - name: Write YouTube cookies
+        env:
+          YT_COOKIES: ${{ secrets.YT_COOKIES }}
+        run: |
+          if [ -n "$YT_COOKIES" ]; then
+            echo "$YT_COOKIES" > yt_cookies.txt
+            echo "Cookies yazıldı ($(wc -c < yt_cookies.txt) byte)"
+          fi
+
+      - name: "Test 1: yt-dlp (trafik WARP tünelinden geçiyor)"
+        id: warp_ytdlp
+        continue-on-error: true
+        run: |
+          vid="${{ inputs.video_id || 'jNQXAC9IVRw' }}"
+          cookie_arg=""
+          [ -f yt_cookies.txt ] && cookie_arg="--cookies yt_cookies.txt"
+
+          yt-dlp \
+            --skip-download \
+            --print "title" \
+            --print "format_id" \
+            --sleep-interval 2 \
+            $cookie_arg \
+            "https://www.youtube.com/watch?v=$vid" 2>&1
+
+      - name: "Test 2: pytubefix (trafik WARP tünelinden geçiyor)"
+        id: warp_ptf
+        continue-on-error: true
+        run: |
+          python3 << PYEOF
+          import sys
+          from pytubefix import YouTube
+
+          vid = "${{ inputs.video_id || 'jNQXAC9IVRw' }}"
+          url = f"https://www.youtube.com/watch?v={vid}"
+
+          for client in ["ANDROID_TESTSUITE", "IOS", "WEB"]:
+              print(f"\n--- {client} ---")
+              try:
+                  yt = YouTube(url, client=client)
+                  streams = yt.streams.filter(file_extension="mp4")
+                  print(f"  Başlık: {yt.title}")
+                  print(f"  Stream sayısı: {len(streams)}")
+                  if streams:
+                      s = streams.order_by("resolution").desc().first()
+                      print(f"  En iyi: {s.resolution} ({s.filesize_mb:.1f} MB)")
+                      sys.exit(0)
+              except Exception as e:
+                  print(f"  HATA: {str(e)[:200]}")
+          sys.exit(1)
+          PYEOF
+
+      - name: Sonuçları özetle
+        if: always()
+        run: |
+          echo ""
+          echo "========================================"
+          echo "         YOUTUBE TEST SONUÇLARI"
+          echo "========================================"
+
+          r1="${{ steps.warp_ytdlp.outcome }}"
+          r2="${{ steps.warp_ptf.outcome }}"
+
+          [ "$r1" = "success" ] && echo "✅ yt-dlp (WARP tünel) → ÇALIŞIYOR" || echo "❌ yt-dlp (WARP tünel) → BAŞARISIZ"
+          [ "$r2" = "success" ] && echo "✅ pytubefix (WARP tünel) → ÇALIŞIYOR" || echo "❌ pytubefix (WARP tünel) → BAŞARISIZ"
+
+          echo "========================================"
+
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## YouTube Test Sonuçları (Cloudflare WARP Tünel)
+
+          | Yöntem | Sonuç |
+          |--------|-------|
+          | yt-dlp | $([ "$r1" = "success" ] && echo "✅" || echo "❌") |
+          | pytubefix | $([ "$r2" = "success" ] && echo "✅" || echo "❌") |
+          EOF

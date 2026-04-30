@@ -19,6 +19,19 @@ import requests
 SFX_DIR = "assets/sfx"
 MUSIC_DIR = "assets/music"
 MAP_DIR = "assets/maps"
+FONTS_DIR = "assets/fonts"
+
+# Arapça font (Google Noto Fonts — OFL lisansı)
+# NOT: notofonts/noto-fonts monoreposu dağıtıldı, artık bireysel repolar var.
+_ARABIC_FONT_URLS = [
+    # 1) Bireysel repo (güncel)
+    "https://github.com/notofonts/arabic-naskh/raw/main/fonts/NotoNaskhArabic/ttf/NotoNaskhArabic-Bold.ttf",
+    # 2) Google Fonts mirror
+    "https://fonts.gstatic.com/s/notonaskharabic/v33/RrQPboN_4yJ0CjmYYkRmEXbFAoHRFQIXHxBUz9Z4.ttf",
+    # 3) jsDelivr CDN üzerinden eski monorepo
+    "https://cdn.jsdelivr.net/gh/notofonts/noto-fonts@main/hinted/ttf/NotoNaskhArabic/NotoNaskhArabic-Bold.ttf",
+]
+ARABIC_FONT_DEST = "assets/fonts/NotoNaskhArabic-Bold.ttf"
 
 # Pixabay Audio API (ücretsiz, API key opsiyonel)
 PIXABAY_API = "https://pixabay.com/api/videos/sounds/"
@@ -191,6 +204,26 @@ def download_music(pixabay_key: str = None, freesound_key: str = None) -> None:
         print(f"  ⚠️  Müzik dosyası bulunamadı! assets/music/ klasörüne mp3 ekleyin.")
 
 
+def download_arabic_font() -> None:
+    """Arapça altyazı ve başlık overlay için Noto Naskh Arabic Bold fontunu indirir."""
+    os.makedirs(FONTS_DIR, exist_ok=True)
+    if os.path.exists(ARABIC_FONT_DEST):
+        print(f"  ⏭️  NotoNaskhArabic-Bold.ttf zaten mevcut, atlandı.")
+        return
+    print(f"\n🔤 Arapça font indiriliyor...")
+    for url in _ARABIC_FONT_URLS:
+        if _download(url, ARABIC_FONT_DEST, "NotoNaskhArabic-Bold.ttf"):
+            # Geçerli TTF mı kontrol et
+            if os.path.exists(ARABIC_FONT_DEST) and os.path.getsize(ARABIC_FONT_DEST) > 50_000:
+                print(f"  ✅ Font indirildi ({url.split('/')[2]})")
+                return
+            try:
+                os.unlink(ARABIC_FONT_DEST)
+            except OSError:
+                pass
+    print("  ⚠️  Font indirilemedi — sistem fontu kullanılacak (apt: fonts-noto-core)")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WAR SHORTS — Varlık İndirici")
     parser.add_argument("--sfx-only", action="store_true")
@@ -212,6 +245,9 @@ if __name__ == "__main__":
 
     # Dünya haritası (overlay_system için)
     download_world_map()
+
+    # Arapça font
+    download_arabic_font()
 
     print("\n✅ Tamamlandı!")
     print(f"   SFX:   {SFX_DIR}/")

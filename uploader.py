@@ -57,6 +57,8 @@ def upload_video(
     description: str,
     tags: list,
     thumbnail_path: str = None,
+    localizations: dict = None,
+    category_id: str = "25",
 ) -> str:
     """
     Videoyu YouTube'a yükler, thumbnail ekler. Video ID'sini döndürür.
@@ -69,7 +71,8 @@ def upload_video(
             "title": title,
             "description": description,
             "tags": tags,
-            "categoryId": "27",  # Education
+            "categoryId": category_id,
+            "defaultLanguage": "en",
         },
         "status": {
             "privacyStatus": "public",
@@ -96,14 +99,38 @@ def upload_video(
     video_id = response["id"]
     print(f"[uploader] Video yüklendi: https://youtube.com/shorts/{video_id}")
 
+    # Localization (çoklu dil başlık/açıklama) ekle
+    if localizations:
+        print(f"[uploader] Localization ekleniyor ({len(localizations)} dil)...")
+        try:
+            youtube.videos().update(
+                part="localizations",
+                body={
+                    "id": video_id,
+                    "localizations": localizations,
+                },
+            ).execute()
+            print("[uploader] Localization eklendi.")
+        except Exception as e:
+            print(f"[uploader] Localization başarısız — video siliniyor: {e}")
+            try:
+                youtube.videos().delete(id=video_id).execute()
+                print(f"[uploader] Video silindi: {video_id}")
+            except Exception as del_err:
+                print(f"[uploader] Video silinemedi: {del_err}")
+            raise RuntimeError(f"Localization eklenemedi, video silindi: {e}")
+
     # Thumbnail yükle
     if thumbnail_path and os.path.exists(thumbnail_path):
         print("[uploader] Thumbnail yükleniyor...")
-        youtube.thumbnails().set(
-            videoId=video_id,
-            media_body=MediaFileUpload(thumbnail_path),
-        ).execute()
-        print("[uploader] Thumbnail yüklendi.")
+        try:
+            youtube.thumbnails().set(
+                videoId=video_id,
+                media_body=MediaFileUpload(thumbnail_path),
+            ).execute()
+            print("[uploader] Thumbnail yüklendi.")
+        except Exception as e:
+            print(f"[uploader] Thumbnail yüklenemedi (kritik değil): {e}")
 
     return video_id
 
@@ -137,15 +164,47 @@ def post_pinned_comment(youtube, video_id: str, text: str) -> str | None:
         return None
 
 
+_DESC_CTA = {
+    "en": "Follow for daily military intelligence briefings!",
+    "tr": "Günlük askeri istihbarat brifingleri için takip et!",
+    "ar": "تابعنا للمزيد من التحليلات العسكرية اليومية!",
+}
+
+_BASE_HASHTAGS = ["#Shorts", "#Military", "#BreakingNews", "#Geopolitics", "#WarNews"]
+
+
 def build_description(script: dict) -> str:
-    tags_str = " ".join(f"#{t}" for t in script.get("tags", []))
-    return (
-        f"{script['title']}\n\n"
-        f"{script['hook']}\n\n"
-        f"Follow for daily history what-ifs!\n\n"
-        f"{tags_str}\n"
-        f"#Shorts #History #WhatIf #War #WarHistory"
+    lang = script.get("language", "en")
+    cta_line = _DESC_CTA.get(lang, _DESC_CTA["en"])
+
+    # Script tags → topic-specific hashtags (Gemini'nin ürettiği)
+    script_tags = script.get("tags", [])
+    topic_hashtags = " ".join(
+        f"#{t.replace(' ', '').replace('-', '')}"
+        for t in script_tags
+        if t and t.isascii()  # Arapça tag'lar # prefix ile sorun yaratır
     )
+
+    # Arapça tag'lar için ayrı (# prefix'siz, virgülle)
+    ar_tags = [t for t in script_tags if t and not t.isascii()]
+    ar_line = " ".join(ar_tags) if ar_tags else ""
+
+    base = " ".join(_BASE_HASHTAGS)
+
+    parts = [
+        script["title"],
+        "",
+        script.get("hook", ""),
+        "",
+        cta_line,
+        "",
+        topic_hashtags,
+        base,
+    ]
+    if ar_line:
+        parts.append(ar_line)
+
+    return "\n".join(parts).strip()
 
 
 if __name__ == "__main__":

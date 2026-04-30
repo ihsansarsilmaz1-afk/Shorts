@@ -15,11 +15,8 @@ on:
 
 jobs:
   batch-produce:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 120
-    env:
-      PYTHONIOENCODING: utf-8
-      PYTHONUTF8: 1
 
     steps:
       - name: Checkout
@@ -30,28 +27,90 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Deno (yt-dlp EJS runtime)
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg fonts-liberation fonts-noto-core fonts-noto-extra
+
+      - name: Install & start Cloudflare WARP
+        run: |
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg \
+            | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" \
+            | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update -qq
+          sudo apt-get install -y cloudflare-warp
+          sudo systemctl start warp-svc || sudo warp-svc &
+          for i in $(seq 1 10); do
+            if warp-cli --accept-tos status 2>/dev/null | grep -qi "registration\|disconnected\|connected"; then
+              break
+            fi
+            sleep 2
+          done
+          warp-cli --accept-tos registration new 2>/dev/null || true
+          warp-cli --accept-tos mode warp
+          warp-cli --accept-tos connect
+          for i in $(seq 1 30); do
+            if warp-cli --accept-tos status 2>/dev/null | grep -qi "^Status update: Connected"; then
+              echo "WARP bağlandı! (${i}. deneme)"
+              break
+            fi
+            sleep 3
+          done
+          if curl -s --max-time 10 https://cloudflare.com/cdn-cgi/trace 2>/dev/null | grep -q "warp=on"; then
+            echo "WARP tünel aktif!"
+          else
+            echo "::warning::WARP başlatılamadı"
+          fi
+
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Download assets (SFX & music)
-        run: python setup_assets.py
+      - name: Update yt-dlp & pytubefix to latest
+        run: pip install -U "yt-dlp[default]" pytubefix
+
+      - name: Write YouTube cookies
+        run: |
+          if [ -n "$YT_COOKIES" ]; then
+            echo "$YT_COOKIES" > yt_cookies.txt
+          fi
+        env:
+          YT_COOKIES: ${{ secrets.YT_COOKIES }}
+
+      - name: Restore seen clip IDs cache
+        uses: actions/cache@v4
+        with:
+          path: output/seen_clip_ids.json
+          key: seen-clip-ids-batch-${{ github.run_id }}
+          restore-keys: |
+            seen-clip-ids-batch-
+            seen-clip-ids-
+
+      - name: Download assets (SFX, music & Arabic font)
+        run: |
+          python setup_assets.py
+          python -c "from setup_assets import download_arabic_font; download_arabic_font()"
 
       - name: Run batch producer
         run: |
-          python batch_producer.py --count ${{ inputs.count || '7' }} ${{ inputs.dry_run == 'true' && '--dry-run' || '' }}
+          python batch_producer.py \
+            --count ${{ inputs.count || '7' }} \
+            ${{ inputs.dry_run == 'true' && '--dry-run' || '' }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DVIDS_API_KEY: ${{ secrets.DVIDS_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           LANGUAGE: ${{ vars.LANGUAGE || 'en' }}
-
-      - name: Build weekly compilation
-        if: ${{ inputs.dry_run != 'true' }}
-        run: python weekly_compilation.py
-        env:
-          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TOPIC_KEYWORDS: ${{ vars.TOPIC_KEYWORDS || 'Israel,Gaza,Hamas,Hezbollah,IDF,West Bank,Jerusalem,Iran,IRGC,Iran nuclear,Iran missile,Iran US,Iran Israel,Iranian' }}
 
       - name: Upload batch videos as artifacts
         uses: actions/upload-artifact@v4
@@ -60,11 +119,18 @@ jobs:
           path: batch_output/
           retention-days: 10
 
+      - name: Save seen clip IDs cache
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: output/seen_clip_ids.json
+          key: seen-clip-ids-batch-${{ github.run_id }}
+
       - name: Commit used topics state
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add used_topics.json scheduled_queue.json
-          $hasChanges = git diff --cached --quiet; if ($LASTEXITCODE -ne 0) { git commit -m "Update used topics and queue state [skip ci]" }
-          git push
+          git add used_topics.json scheduled_queue.json || true
+          git diff --cached --quiet || git commit -m "Update used topics and queue state [skip ci]"
+          git push || true

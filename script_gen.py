@@ -10,6 +10,7 @@ import re
 import sys
 import time
 import requests
+from datetime import date
 
 
 # ─── 6 Format İçin System Prompt'ları ────────────────────────────────────────
@@ -28,13 +29,12 @@ HOOK FORMULA (pick the best):
 - Scary implication: "What [country] just did should terrify [other country]."
 - Hidden meaning: "Everyone's talking about [event]. Nobody's talking about what it actually means."
 
-SCRIPT STRUCTURE (50-55 seconds):
+SCRIPT STRUCTURE (25-30 seconds):
 0-3s HOOK: The event + why the viewer MUST care. Maximum urgency.
-3-12s CONTEXT: What happened, in 2-3 punchy sentences. Specific names, weapons, locations.
-12-25s WHY IT MATTERS: The regional/global implications. "Here's what nobody is telling you..."
-25-40s ESCALATION: What could happen next. Paint the scary scenario. "If this continues..."
-40-50s PREDICTION: Your bold take on what happens next. "Here's what I think is really going on..."
-50-55s CTA: "Follow for daily military intelligence briefings."
+3-8s CONTEXT: What happened, 2 punchy sentences. Specific names, weapons, locations.
+8-16s WHY IT MATTERS: The regional/global implications. "Here's what nobody is telling you..."
+16-24s ESCALATION: What could happen next. The scary scenario. "If this continues..."
+24-28s PREDICTION + CTA: Your bold take, then "Follow for daily military intelligence briefings."
 
 VIRALITY RULES:
 - Sound like a TOP SECRET briefing being leaked to the public
@@ -48,18 +48,27 @@ Output ONLY valid JSON:
 {
   "title": "Analysis title (max 60 chars)",
   "hook": "Breaking urgency opener (max 15 words)",
-  "narration": "Full 150-180 word analysis script",
-  "tags": ["military", "analysis", "geopolitics", "breaking", "shorts", "specific_tag1"],
+  "narration": "Full 40-50 word analysis script",
+  "tags": ["Iran Nuclear", "Israel Iran", "Middle East", "Military News", "Breaking News", "IDF", "IRGC", "Nuclear Threat"],
   "thumbnail_text": "4 WORD SHOCK CAPS",
-  "search_keywords": ["specific visual 1", "specific visual 2", "specific visual 3", "specific visual 4", "specific visual 5", "specific visual 6"],
+  "search_keywords": ["specific visual 1", "specific visual 2", "specific visual 3", "specific visual 4", "specific visual 5", "specific visual 6", "specific visual 7", "specific visual 8", "specific visual 9", "specific visual 10"],
   "mood": "dark|epic|mysterious|inspiring",
   "format": "news_analysis"
 }
 
 CRITICAL:
-- search_keywords must have 6 items, SPECIFIC and VISUAL: "military command center screens" not "military"
+- search_keywords must have 10 items that are REAL YOUTUBE SEARCH QUERIES to find matching footage
+  GOOD: "IDF Merkava tank Gaza ground operation footage", "Iron Dome intercept Hamas rocket footage", "Israeli airstrike Gaza building collapse"
+  BAD:  "military", "war footage", "explosion" (too generic!)
+  Each keyword MUST include: specific weapon/unit/location name + country/force name + action
+  Think: "What would I type on YouTube to find footage of THIS specific scene?"
+  Cover different visual angles: aerial footage, ground troops, weapon systems, aftermath, command center
 - This must feel like BREAKING ANALYSIS, not a history lesson
-- narration MUST be 150-180 words, present tense, short sentences""",
+- narration MUST be 40-50 words, present tense, short punchy sentences (target: 18-20 second read)
+- tags MUST be topic-specific: country names, weapon systems, leaders, organizations from THIS story — use normal spacing (e.g. "IDF", "Iron Dome", "Iran Nuclear", "Middle East", "Israel Lebanon") — NOT camelCase, NOT generic words like "military" or "war"
+- Start narration DIRECTLY with the hook content — NO date, NO "Today is...", NO preamble
+- NEVER use placeholder brackets like [Country], [Leader], [Event] — always use real specific names from the topic
+- LOOP DESIGN: The last sentence of narration must echo or mirror the opening hook — this triggers replays (e.g., hook: "Iran just crossed the red line." → closer: "The red line has been crossed. Watch what happens next.")""",
     },
 
     "tr": {
@@ -73,13 +82,12 @@ HOOK FORMÜLLERI (en güçlüsünü seç):
 - Korkutucu sonuç: "[Ülke]'nin yaptığı [diğer ülke]'yi korkutmalı."
 - Gizli anlam: "Herkes [olayı] konuşuyor. Kimse gerçekte ne anlama geldiğini konuşmuyor."
 
-SENARYO YAPISI (50-55 saniye):
+SENARYO YAPISI (25-30 saniye):
 0-3sn HOOK: Olay + izleyicinin NEDEN umursaması gerektiği. Maksimum aciliyet.
-3-12sn BAĞLAM: Ne oldu, 2-3 çarpıcı cümleyle. Spesifik isimler, silahlar, lokasyonlar.
-12-25sn NEDEN ÖNEMLİ: Bölgesel/küresel sonuçlar. "İşte kimsenin söylemediği..."
-25-40sn TIRMANMA: Sırada ne olabilir. Korkutucu senaryoyu çiz. "Bu devam ederse..."
-40-50sn TAHMİN: Cesur tahminin. "Bence aslında olan şu..."
-50-55sn CTA: "Günlük askeri istihbarat brifingleri için takip et."
+3-8sn BAĞLAM: Ne oldu, 2 çarpıcı cümleyle. Spesifik isimler, silahlar, lokasyonlar.
+8-16sn NEDEN ÖNEMLİ: Bölgesel/küresel sonuçlar. "İşte kimsenin söylemediği..."
+16-24sn TIRMANMA: Sırada ne olabilir. Korkutucu senaryoyu çiz. "Bu devam ederse..."
+24-28sn TAHMİN + CTA: Cesur tahminin ve "Günlük askeri istihbarat brifingleri için takip et."
 
 VİRALLİK KURALLARI:
 - GİZLİ bir brifing sızdırılıyormuş gibi konuş
@@ -88,11 +96,71 @@ VİRALLİK KURALLARI:
 - İzleyici içeriden bilgi alan biri gibi hissetmeli
 - Kısa çarpıcı cümleler. Geniş zaman. Gerçek brifing gibi.
 
-150-180 kelime. search_keywords İngilizce.
+40-50 kelime. Narrasyona DOĞRUDAN hook içeriğiyle başla — tarih yok, giriş yok. search_keywords İngilizce.
+tags: konuya özel İngilizce kelimeler — ülke adları, silah sistemleri, örgüt isimleri (örn: "IDF", "IRGC", "Hamas", "Iron Dome", "F-35"). Boşluklu yaz ("Iron Dome" değil "IronDome"). "military" veya "war" gibi genel kelimeler YASAK.
+YASAK: [Ülke], [Lider], [Olay] gibi köşeli parantez içinde yer tutucu kullanma — her zaman konudaki gerçek isimleri yaz.
+DÖNGÜ TASARIMI: Narrasyonun son cümlesi açılış hook'unu yansıtmalı — bu tekrar izlemeyi tetikler. Örn: Hook: "İran kırmızı çizgiyi geçti." → Son: "Kırmızı çizgi aşıldı. Sırada ne var, takip et."
 {
   "title": "...", "hook": "...", "narration": "...",
   "tags": [...], "thumbnail_text": "...",
   "search_keywords": [...], "mood": "...", "format": "news_analysis"
+}""",
+    },
+
+    "ar": {
+        "news_analysis": """أنت محلل عسكري على يوتيوب شورتس تحلل الأحداث الجارية للجمهور العربي.
+
+أسلوبك: محلل استخباراتي حاد وصريح. تكشف ما تخفيه وسائل الإعلام الغربية. تشرح الأبعاد الحقيقية للأحداث. صوتك يحمل ثقل المعلومات السرية المسرَّبة.
+
+صيغ الخطاف الأكثر انتشاراً على يوتيوب العربي (اختر الأقوى):
+- العاجل الصادم: "عاجل: [البلد] أطلق للتو [السلاح] وهذا يغير كل شيء."
+- الكشف المحظور: "ما أخفاه عنك الإعلام الغربي عن [الحدث]."
+- التهديد المباشر: "[البلد] على وشك [الفعل] — وهذا ما يعنيه لنا."
+- الرقم الصادم: "[رقم] [سلاح/جندي/صاروخ] — هذا ما يحدث الآن في [المنطقة]."
+- السؤال الاستفزازي: "لماذا صمت العالم عن [الحدث]؟ الجواب مخيف."
+- الاتهام المباشر: "[البلد] يكذب على العالم — إليك الحقيقة."
+
+هيكل السيناريو (25-30 ثانية):
+0-3 ث الخطاف: الصدمة الفورية. جملة واحدة تجعل المشاهد يتجمد.
+3-8 ث السياق: ماذا حدث بالتحديد. أسماء حقيقية، أرقام حقيقية، أسلحة حقيقية.
+8-16 ث الكشف: "إليك ما لا يريدونك أن تعرفه..." — البُعد الخفي للحدث.
+16-24 ث التصعيد: السيناريو المخيف. "إذا لم يتوقف هذا خلال 72 ساعة..."
+24-28 ث الختام المشحون: تنبؤ جريء + "تابعنا — ما سيأتي سيصدمك."
+
+قواعد الانتشار للجمهور العربي:
+- استخدم كلمات القوة: عاجل، خطير، صادم، حصري، مرعب، كارثي
+- اكشف "الحقيقة المخفية عن الإعلام الغربي" — هذا يولّد مشاركة هائلة
+- أسماء محددة: لا تقل "الدولة" بل قل "إيران" أو "إسرائيل" أو "الحرس الثوري"
+- الأرقام تصنع الفيروسية: "٢٣٠٠ صاروخ" أقوى من "صواريخ كثيرة"
+- اربط الحدث بتأثيره على المنطقة العربية مباشرة
+
+العنوان (title):
+- ابدأ بكلمة صادمة: عاجل | صادم | خطير | حصري | مرعب
+- أو بسؤال استفزازي: "لماذا...؟" / "كيف...؟" / "ماذا يعني...؟"
+- أو برقم: "٧ أسباب..." / "في ٤٠ ثانية..."
+- الحد الأقصى: 55 حرفاً عربياً
+
+الخطاف (hook):
+- 8-12 كلمة عربية كحد أقصى
+- يجب أن يسبب صدمة فورية أو فضولاً لا يُقاوم
+- لا يبدأ بـ "اليوم" أو "في هذا الفيديو" أو أي مقدمة
+
+حرام مطلق: لا تستخدم أبداً [الدولة] أو [الحدث] أو [القائد] — الأسماء الحقيقية دائماً.
+
+40-50 كلمة عربية. ابدأ السرد مباشرةً بمحتوى الخطاف — بدون تاريخ، بدون مقدمة.
+tags: كلمات إنجليزية محددة للموضوع — أسماء الدول، الأسلحة، المنظمات (مثل: "IDF"، "IRGC"، "Hamas"، "Iron Dome"). اكتب بمسافات ("Iron Dome" وليس "IronDome"). ممنوع الكلمات العامة مثل "military" أو "war".
+search_keywords باللغة الإنجليزية. thumbnail_text باللغة العربية (4-5 كلمات صادمة بالأحرف الكبيرة).
+تصميم الحلقة: الجملة الأخيرة من السرد يجب أن تعكس الخطاف — هذا يحفّز إعادة المشاهدة. مثال: الخطاف: "إيران تجاوزت الخط الأحمر." → الختام: "الخط الأحمر تجاوز — تابع ما سيأتي."
+
+{
+  "title": "عنوان عربي صادم (max 55 حرف)",
+  "hook": "خطاف عربي 8-12 كلمة",
+  "narration": "سرد عربي كامل 40-50 كلمة",
+  "tags": ["Iran Nuclear", "Israel Iran", "IRGC", "IDF", "Middle East", "Breaking News", "Military News"],
+  "thumbnail_text": "٤-٥ كلمات عربية صادمة",
+  "search_keywords": ["english footage query 1", ..., "english footage query 10"],
+  "mood": "dark|epic|mysterious|inspiring",
+  "format": "news_analysis"
 }""",
     },
 }
@@ -101,6 +169,7 @@ VİRALLİK KURALLARI:
 TTS_VOICES = {
     "en": "en-US-GuyNeural",
     "tr": "tr-TR-AhmetNeural",
+    "ar": "ar-SA-HamedNeural",
 }
 
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
@@ -241,6 +310,36 @@ def _extract_with_regex(raw: str) -> dict:
     }
 
 
+def _load_recent_titles(n: int = 20) -> list[str]:
+    """Son üretilmiş başlıkları döndürür (tekrar önlemek için Gemini'ye iletilir)."""
+    titles = []
+    # scheduled_queue.json'dan başlıkları al
+    try:
+        with open("scheduled_queue.json", encoding="utf-8") as f:
+            queue = json.load(f)
+        titles += [item["title"] for item in queue if item.get("title") and item["title"] != "?"]
+    except Exception:
+        pass
+    # output/last_video.json'dan da al
+    try:
+        with open("output/last_video.json", encoding="utf-8") as f:
+            last = json.load(f)
+        if last.get("title"):
+            titles.append(last["title"])
+    except Exception:
+        pass
+    # Tekrarsız son n başlık
+    seen = set()
+    result = []
+    for t in reversed(titles):
+        if t not in seen:
+            seen.add(t)
+            result.append(t)
+        if len(result) >= n:
+            break
+    return list(reversed(result))
+
+
 def generate_script(topic: str, language: str = "en", forced_format: str = None) -> dict:
     """
     Verilen konu için Gemini ile script üretir.
@@ -255,19 +354,70 @@ def generate_script(topic: str, language: str = "en", forced_format: str = None)
 
     print(f"[script_gen] Format: {script_format} | Dil: {lang}", file=sys.stderr)
 
+    # Son başlıkları yükle — Gemini bu konuları tekrarlamamalı
+    recent_titles = _load_recent_titles(20)
+    avoid_note = ""
+    if recent_titles:
+        titles_str = "\n".join(f"- {t}" for t in recent_titles[-10:])
+        if lang == "tr":
+            avoid_note = f"\n\nÖNEMLİ: Aşağıdaki başlıklar daha önce üretildi, bunlarla aynı veya çok benzer bir konu/başlık ÜRETME:\n{titles_str}"
+        elif lang == "ar":
+            avoid_note = f"\n\nمهم: العناوين التالية تم إنتاجها مسبقاً، لا تنتج عنواناً مماثلاً أو مشابهاً جداً:\n{titles_str}"
+        else:
+            avoid_note = f"\n\nIMPORTANT: The following titles were already produced. Do NOT generate a title or topic that is the same or very similar to these:\n{titles_str}"
+
     user_prompts = {
         "en": {
-            "news_analysis": f"Write a military analysis YouTube Shorts script about: {topic}. Break down what just happened, why it matters, and what happens next. Sound like a classified intelligence briefing.",
+            "news_analysis": f"""Write a military analysis YouTube Shorts script about: {topic}.
+
+RETENTION RULES (follow exactly):
+1. Start the narration IMMEDIATELY with the hook — no date, no 'Today is...', no preamble.
+2. Around the midpoint, add a curiosity loop: "But here's what nobody is talking about..." or "And this changes everything..." to keep viewers watching.
+3. End the narration with a forward-tension closer like "Stay tuned — what comes next will surprise you." or "The next 72 hours will determine everything."
+4. Sound like a classified intelligence briefing throughout.
+{avoid_note}""",
         },
         "tr": {
-            "news_analysis": f"Bu konu için askeri analiz YouTube Shorts senaryosu yaz: {topic}. Ne oldu, neden önemli ve sırada ne var? Gizli istihbarat brifingiymiş gibi yaz.",
+            "news_analysis": f"""Bu konu için askeri analiz YouTube Shorts senaryosu yaz: {topic}.
+
+RETENTION KURALLARI (tam olarak uygula):
+1. Narrasyona DOĞRUDAN hook cümlesiyle başla — tarih yok, 'Bugün...' yok, giriş yok.
+2. Ortada merak döngüsü kur: "Ama kimsenin konuşmadığı şey şu..." veya "Ve bu her şeyi değiştiriyor..." gibi bir cümleyle izleyiciyi ekranda tut.
+3. Narrasyonu ileriye dönük gerilimle bitir: "Sonraki 72 saat her şeyi belirleyecek." veya "Sırada ne olduğunu tahmin edemezsiniz."
+4. Tüm metin gizli istihbarat brifingiymiş gibi olsun.
+{avoid_note}""",
+        },
+        "ar": {
+            "news_analysis": f"""اكتب سيناريو تحليل عسكري لـ YouTube Shorts بالعربية عن: {topic}.
+
+متطلبات العنوان (title):
+- ابدأ بكلمة صادمة مثل: عاجل | صادم | خطير | حصري | مرعب | كارثي
+- أو بسؤال استفزازي: "لماذا صمت العالم عن...؟" / "ما الذي يخفيه...؟"
+- أو برقم محدد: "٣ أسباب..." / "٧ دول..."
+- استخدم الأسماء الحقيقية من الموضوع: إيران، إسرائيل، الحرس الثوري، الناتو...
+
+متطلبات الخطاف (hook):
+- 8-12 كلمة عربية فقط
+- يجب أن يُصدم المشاهد أو يثير فضوله في أقل من 3 ثوانٍ
+- استخدم إحدى هذه الصيغ الفيروسية:
+  * "عاجل: [البلد] أطلق للتو [السلاح/الهجوم]..."
+  * "ما أخفاه عنك الإعلام الغربي عن [الحدث]..."
+  * "[رقم] [سلاح/ضحية/صاروخ] في [المكان] — الحقيقة الكاملة."
+  * "لماذا صمت العالم عن ما فعله [البلد]؟"
+
+قواعد الاستبقاء:
+1. ابدأ السرد مباشرةً بمحتوى الخطاف — بدون تاريخ، بدون "في هذا الفيديو".
+2. في المنتصف: "لكن ما لا يريدونك أن تعرفه هو..." لإبقاء المشاهد أمام الشاشة.
+3. اختم بتوتر: "الـ72 ساعة القادمة ستحدد مصير المنطقة." أو "ما سيأتي سيصدم العالم."
+4. thumbnail_text: 4-5 كلمات عربية صادمة بالأحرف الكبيرة (مثال: عاجل إيران تهاجم اليوم)
+{avoid_note}""",
         },
     }
 
-    user_prompt = user_prompts[lang][script_format]
+    user_prompt = user_prompts.get(lang, user_prompts["en"])[script_format]
 
     # Model fallback zinciri
-    models = ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite", "gemini-1.5-flash"]
+    models = ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite", "gemini-2.0-flash"]
     last_error = None
 
     for model in models:
@@ -288,7 +438,7 @@ def generate_script(topic: str, language: str = "en", forced_format: str = None)
                     raise ValueError("Narration is empty")
 
                 script["language"] = lang
-                script["tts_voice"] = TTS_VOICES[lang]
+                script["tts_voice"] = TTS_VOICES.get(lang, TTS_VOICES["en"])
                 # Format ve mood'u garanti et
                 script.setdefault("format", script_format)
                 script.setdefault("mood", "epic")

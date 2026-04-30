@@ -27,6 +27,9 @@ MAP_PATH = "assets/maps/world_base.png"
 
 # ─── Font yardımcısı ─────────────────────────────────────────────────────────
 
+ARABIC_FONT_PATH = "assets/fonts/NotoNaskhArabic-Bold.ttf"
+
+
 def _load_font(size: int) -> ImageFont.FreeTypeFont:
     for path in [
         FONT_PATH,
@@ -39,6 +42,48 @@ def _load_font(size: int) -> ImageFont.FreeTypeFont:
             except OSError:
                 continue
     return ImageFont.load_default()
+
+
+def _is_arabic(text: str) -> bool:
+    return any(
+        "\u0600" <= ch <= "\u06FF"
+        or "\uFB50" <= ch <= "\uFDFF"
+        or "\uFE70" <= ch <= "\uFEFF"
+        for ch in text
+    )
+
+
+def _prepare_arabic_text(text: str) -> str:
+    if not _is_arabic(text):
+        return text
+    try:
+        import arabic_reshaper
+        from bidi.algorithm import get_display
+        import re as _re
+        display = get_display(arabic_reshaper.reshape(text))
+        # PIL bidi kontrol karakterlerini işleyemiyor — temizle
+        display = _re.sub(r'[\u200e\u200f\u202a-\u202e\u2066-\u2069]', '', display)
+        return display
+    except ImportError:
+        return text
+
+
+def _load_arabic_font(size: int) -> ImageFont.FreeTypeFont:
+    import glob as _glob
+    candidate_paths = [
+        ARABIC_FONT_PATH,
+        "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Bold.ttf",
+        "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf",
+    ]
+    candidate_paths += sorted(_glob.glob("/usr/share/fonts/**/*Arabic*Bold*.ttf", recursive=True))
+    candidate_paths += sorted(_glob.glob("/usr/share/fonts/**/*Arabic*.ttf", recursive=True))
+    for path in candidate_paths:
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except OSError:
+                continue
+    return _load_font(size)
 
 
 # ─── Ülke Veritabanı ─────────────────────────────────────────────────────────
@@ -321,61 +366,59 @@ def create_map_overlay(country: str, base_map_path: str = MAP_PATH) -> np.ndarra
 
 def create_stat_card(value: str, label: str) -> np.ndarray:
     """
-    Koyu tema istatistik kartı oluşturur.
-    Returns: 500x300 RGBA numpy array.
+    Modern glassmorphism istatistik kartı.
+    Returns: 460x200 RGBA numpy array.
     """
-    w, h = 500, 300
+    w, h = 460, 200
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # Arka plan — yarı saydam koyu
-    draw.rounded_rectangle([(0, 0), (w, h)], radius=16, fill=(15, 15, 25, 200))
+    # Arka plan: koyu yarı saydam, yuvarlak köşeli
+    draw.rounded_rectangle([(0, 0), (w, h)], radius=20,
+                            fill=(12, 12, 20, 210))
 
-    # Üst kırmızı çizgi
-    draw.rectangle([(0, 0), (w, 6)], fill=(220, 30, 30, 255))
+    # Sol kenar aksan çizgisi (kırmızı dikey)
+    draw.rounded_rectangle([(0, 0), (5, h)], radius=4,
+                            fill=(220, 40, 40, 255))
 
-    # Büyük beyaz sayı
-    font_big = _load_font(72)
-    # Değeri sığdır — çok uzunsa küçült
-    bbox = draw.textbbox((0, 0), value, font=font_big)
-    text_w = bbox[2] - bbox[0]
-    if text_w > w - 40:
-        font_big = _load_font(52)
-        bbox = draw.textbbox((0, 0), value, font=font_big)
-        text_w = bbox[2] - bbox[0]
+    # Üst ince çizgi (soluk beyaz — glass efekti)
+    draw.rectangle([(5, 0), (w, 1)], fill=(255, 255, 255, 30))
 
-    vx = (w - text_w) // 2
-    vy = 60
-
-    # Gölge
-    draw.text((vx + 2, vy + 2), value, font=font_big, fill=(0, 0, 0, 150))
-    draw.text((vx, vy), value, font=font_big, fill=(255, 255, 255, 255))
-
-    # Küçük kırmızı etiket
+    # Etiket — küçük, kırmızı, üstte
     label_map = {
         "currency": "ECONOMIC VALUE",
         "military": "MILITARY FORCE",
         "speed": "SPEED",
         "percentage": "PERCENTAGE",
-        "distance": "RANGE / DISTANCE",
+        "distance": "RANGE",
         "weight": "WEIGHT",
-        "year": "YEAR",
-        "number": "FIGURE",
+        "number": "KEY FIGURE",
     }
     label_text = label_map.get(label, label.upper())
-    font_small = _load_font(26)
-    lbbox = draw.textbbox((0, 0), label_text, font=font_small)
+    font_label = _load_font(22)
+    lbbox = draw.textbbox((0, 0), label_text, font=font_label)
     lw = lbbox[2] - lbbox[0]
-    lx = (w - lw) // 2
-    ly = vy + (bbox[3] - bbox[1]) + 30
+    draw.text((28, 22), label_text, font=font_label, fill=(200, 50, 50, 230))
 
-    draw.text((lx, ly), label_text, font=font_small, fill=(220, 60, 60, 255))
+    # Etiket altında ince seperatör
+    draw.rectangle([(28, 50), (w - 28, 51)], fill=(255, 255, 255, 18))
 
-    # Alt dekoratif çizgi
-    line_w = min(lw + 40, w - 60)
-    line_x = (w - line_w) // 2
-    draw.rectangle([(line_x, ly + 40), (line_x + line_w, ly + 42)],
-                   fill=(220, 60, 60, 120))
+    # Büyük değer metni
+    font_big = _load_font(68)
+    bbox = draw.textbbox((0, 0), value, font=font_big)
+    text_w = bbox[2] - bbox[0]
+    if text_w > w - 56:
+        font_big = _load_font(50)
+        bbox = draw.textbbox((0, 0), value, font=font_big)
+        text_w = bbox[2] - bbox[0]
+
+    vx = (w - text_w) // 2
+    vy = 64
+
+    # Hafif gölge
+    draw.text((vx + 2, vy + 2), value, font=font_big, fill=(0, 0, 0, 120))
+    # Beyaz ana değer
+    draw.text((vx, vy), value, font=font_big, fill=(255, 255, 255, 255))
 
     return np.array(img)
 
@@ -442,9 +485,10 @@ def create_flag_overlay(flag_path: str) -> np.ndarray | None:
 
 # ─── Format Bazlı Overlay'ler ─────────────────────────────────────────────────
 
-def create_breaking_banner(duration: float) -> np.ndarray:
+def create_breaking_banner(duration: float, title: str = "") -> np.ndarray:
     """
     Kırmızı 'BREAKING MILITARY ANALYSIS' banner (üst, 200px yükseklik).
+    title verilirse ikinci satırda altın rengiyle script başlığı gösterilir.
     Returns: RGBA numpy array.
     """
     w, h = TARGET_W, 200
@@ -458,25 +502,38 @@ def create_breaking_banner(duration: float) -> np.ndarray:
         draw.line([(0, y), (w, y)], fill=(r_val, 15, 15, alpha))
 
     # Ana metin
-    font = _load_font(42)
+    font = _load_font(38)
     text = "BREAKING MILITARY ANALYSIS"
     bbox = draw.textbbox((0, 0), text, font=font)
     tw = bbox[2] - bbox[0]
     tx = (w - tw) // 2
-    ty = 40
+    ty = 20
 
     # Gölge + metin
     draw.text((tx + 2, ty + 2), text, font=font, fill=(0, 0, 0, 180))
     draw.text((tx, ty), text, font=font, fill=(255, 255, 255, 255))
 
-    # Alt kırmızı çizgi
+    # Script başlığı (altın rengi, ikinci satır)
+    if title:
+        is_ar = _is_arabic(title)
+        font_title = _load_arabic_font(26) if is_ar else _load_font(26)
+        title_short = (title[:55] + "…") if len(title) > 58 else title
+        title_display = _prepare_arabic_text(title_short) if is_ar else title_short
+        t2_bbox = draw.textbbox((0, 0), title_display, font=font_title)
+        t2w = t2_bbox[2] - t2_bbox[0]
+        t2x = (w - t2w) // 2
+        t2y = ty + (bbox[3] - bbox[1]) + 8
+        draw.text((t2x + 1, t2y + 1), title_display, font=font_title, fill=(0, 0, 0, 160))
+        draw.text((t2x, t2y), title_display, font=font_title, fill=(255, 220, 0, 240))
+
+    # Alt altın çizgi
     draw.rectangle([(40, h - 8), (w - 40, h - 4)], fill=(255, 220, 0, 200))
 
     # "LIVE" badge
     font_small = _load_font(24)
-    draw.rounded_rectangle([(30, ty + 60), (120, ty + 95)], radius=4,
+    draw.rounded_rectangle([(30, ty + 4), (110, ty + 38)], radius=4,
                            fill=(255, 30, 30, 255))
-    draw.text((48, ty + 63), "LIVE", font=font_small, fill=(255, 255, 255, 255))
+    draw.text((46, ty + 7), "LIVE", font=font_small, fill=(255, 255, 255, 255))
 
     return np.array(img)
 
@@ -496,13 +553,69 @@ def create_news_ticker(text: str, duration: float) -> np.ndarray:
     # Üst kırmızı çizgi
     draw.rectangle([(0, 0), (w, 4)], fill=(220, 30, 30, 255))
 
-    # Metin
-    font = _load_font(26)
-    ticker_text = f"    {text}    |    MILITARY INTELLIGENCE REPORT    |    {text}    "
-    # Metni merkeze yerleştir (statik — kayan efekt MoviePy'de yapılır)
-    bbox = draw.textbbox((0, 0), ticker_text, font=font)
-    ty = (h - (bbox[3] - bbox[1])) // 2
-    draw.text((20, ty), ticker_text, font=font, fill=(200, 200, 210, 255))
+    # Metin — Arapça ve Latin ayrı fontlarla çizilir
+    ty_base = None
+    if _is_arabic(text):
+        ar_font = _load_arabic_font(26)
+        lat_font = _load_font(24)
+        lat_text = "MILITARY INTELLIGENCE REPORT"
+        ar_display = _prepare_arabic_text(text)
+        # Latin metin solda
+        lat_bbox = draw.textbbox((0, 0), lat_text, font=lat_font)
+        ty_base = (h - (lat_bbox[3] - lat_bbox[1])) // 2
+        draw.text((20, ty_base), lat_text, font=lat_font, fill=(200, 200, 210, 255))
+        # Arapça metin sağda
+        ar_bbox = draw.textbbox((0, 0), ar_display, font=ar_font)
+        ar_x = w - (ar_bbox[2] - ar_bbox[0]) - 20
+        ar_ty = (h - (ar_bbox[3] - ar_bbox[1])) // 2
+        draw.text((ar_x, ar_ty), ar_display, font=ar_font, fill=(200, 200, 210, 255))
+    else:
+        font = _load_font(26)
+        ticker_text = f"    {text}    |    MILITARY INTELLIGENCE REPORT    |    {text}    "
+        bbox = draw.textbbox((0, 0), ticker_text, font=font)
+        ty_base = (h - (bbox[3] - bbox[1])) // 2
+        draw.text((20, ty_base), ticker_text, font=font, fill=(200, 200, 210, 255))
+
+    return np.array(img)
+
+
+def create_lower_third(title: str, label: str = "MILITARY ANALYSIS") -> np.ndarray:
+    """
+    TV chyron (lower third) overlay — 1080x140px RGBA.
+    Sol kenardan sağa doğru azalan gradient arka plan + kırmızı aksan çizgileri.
+    Returns: RGBA numpy array.
+    """
+    w, h = TARGET_W, 140
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # Gradient arka plan: sol opak → sağ yarı saydam
+    for x in range(w):
+        alpha = int(200 * max(0, 1.0 - (x / w) * 0.55))
+        draw.line([(x, 0), (x, h)], fill=(8, 8, 18, alpha))
+
+    # Sol kırmızı aksan çizgisi
+    draw.rectangle([(0, 0), (5, h)], fill=(220, 30, 30, 255))
+
+    # Üst ince kırmızı çizgi
+    draw.rectangle([(0, 0), (w, 3)], fill=(220, 30, 30, 220))
+
+    # Kategori etiketi (kırmızı, küçük, üst)
+    font_label = _load_font(22)
+    draw.text((18, 14), label.upper(), font=font_label, fill=(200, 50, 50, 230))
+
+    # Script başlığı (beyaz, büyük, alt)
+    is_ar = _is_arabic(title)
+    font_title = _load_arabic_font(32) if is_ar else _load_font(32)
+    title_short = (title[:52] + "…") if len(title) > 55 else title
+    title_display = _prepare_arabic_text(title_short) if is_ar else title_short
+    t_bbox = draw.textbbox((0, 0), title_display, font=font_title)
+    # Arapça: sağdan hizala; Latin: soldan hizala
+    tx = w - 18 - (t_bbox[2] - t_bbox[0]) if is_ar else 18
+    draw.text((tx, 52), title_display, font=font_title, fill=(255, 255, 255, 240))
+
+    # Alt ince kırmızı çizgi
+    draw.rectangle([(0, h - 3), (w, h)], fill=(220, 30, 30, 180))
 
     return np.array(img)
 
@@ -584,7 +697,7 @@ def create_format_overlays(format_type: str, duration: float, title: str) -> lis
 
     if format_type == "news_analysis":
         # Kırmızı BREAKING banner (üst) — ilk 5 saniye + son 5 saniye
-        banner = create_breaking_banner(duration)
+        banner = create_breaking_banner(duration, title=title)
         overlays.append({
             "type": "banner",
             "data": banner,
@@ -601,15 +714,28 @@ def create_format_overlays(format_type: str, duration: float, title: str) -> lis
                 "position": ("center", 0),
             })
 
-        # Kayan haber ticker (alt) — video boyunca
+        # Ticker banner'ın hemen altında (y=200) — video boyunca
         ticker = create_news_ticker(title, duration)
         overlays.append({
             "type": "ticker",
             "data": ticker,
             "start": 0.0,
             "end": duration,
-            "position": ("center", TARGET_H - 100),
+            "position": ("center", 200),
         })
+
+        # Lower third chyron — hook sonrası (4s) ve video ortasında (ikişer kez)
+        lower = create_lower_third(title)
+        guard = duration - 7.0  # CTA bölgesine girmemek için
+        for lt in [4.0, duration * 0.5]:
+            if lt + 4.0 < guard:
+                overlays.append({
+                    "type": "lower_third",
+                    "data": lower,
+                    "start": lt,
+                    "end": lt + 4.0,
+                    "position": ("center", TARGET_H - 400),
+                })
 
     elif format_type == "countdown":
         # Büyük sayılar — 3, 2, 1
