@@ -172,20 +172,33 @@ def pick_trending_topic(override: str = None, extra_exclude: set = None) -> tupl
                 all_topics = json.load(f)
             available = [t for t in all_topics if t not in extra_exclude]
 
-    # Keyword filtresi (örn. TOPIC_KEYWORDS=Iran,Israel)
+    # Keyword filtresi (örn. TOPIC_KEYWORDS=Iran,Israel veya "Ukraine war,Russia war")
     topic_keywords_env = os.environ.get("TOPIC_KEYWORDS", "").strip()
     if topic_keywords_env:
-        keywords = [k.strip().lower() for k in topic_keywords_env.split(",") if k.strip()]
-        filtered = [t for t in available if any(k in t.lower() for k in keywords)]
+        # Her ifadeyi hem tam string hem kelime kelime kontrol et
+        # "Ukraine war" → ["ukraine", "war"] olarak ayrı ayrı aranır
+        raw_keywords = [k.strip().lower() for k in topic_keywords_env.split(",") if k.strip()]
+        word_keywords = list({w for k in raw_keywords for w in k.split() if len(w) > 2})
+
+        def _matches_keywords(topic: str) -> bool:
+            t = topic.lower()
+            # Tam ifade eşleşmesi
+            if any(k in t for k in raw_keywords):
+                return True
+            # Kelime bazlı eşleşme: en az 2 anahtar kelime içeriyorsa kabul et
+            hits = sum(1 for w in word_keywords if w in t)
+            return hits >= 2
+
+        filtered = [t for t in available if _matches_keywords(t)]
         if filtered:
             available = filtered
             print(f"[topic_selector] Keyword filtresi aktif ({topic_keywords_env}): {len(available)} eşleşen konu")
         else:
-            # [NEWS] konularda eşleşme yok — RSS'yi daha geniş zaman aralığıyla yenile ve tekrar dene
+            # Eşleşme yok — RSS'yi daha geniş pencereyle yenile ve tekrar dene
             print(f"[topic_selector] ⚠️  Keyword filtresi için eşleşme yok ({topic_keywords_env}), RSS yenileniyor...")
             try:
                 import os as _os
-                _os.environ["NEWS_MAX_AGE_HOURS"] = "96"  # 4 günlük pencereyle yeniden dene
+                _os.environ["NEWS_MAX_AGE_HOURS"] = "96"
                 from rss_monitor import monitor_and_update
                 monitor_and_update(max_topics=10)
             except Exception as e:
@@ -193,15 +206,14 @@ def pick_trending_topic(override: str = None, extra_exclude: set = None) -> tupl
             available2, _ = _load_available_topics()
             if extra_exclude:
                 available2 = [t for t in available2 if t not in extra_exclude]
-            filtered2 = [t for t in available2 if any(k in t.lower() for k in keywords)]
+            filtered2 = [t for t in available2 if _matches_keywords(t)]
             if filtered2:
                 available = filtered2
                 print(f"[topic_selector] RSS yenileme sonrası {len(available)} eşleşen konu bulundu")
             else:
-                raise RuntimeError(
-                    f"TOPIC_KEYWORDS={topic_keywords_env!r} için hiç konu bulunamadı. "
-                    f"RSS feed'lerinde eşleşen haber yok."
-                )
+                # Keyword eşleşmesi yok ama pipeline'ı çökertme — mevcut havuzdan devam et
+                print(f"[topic_selector] ⚠️  TOPIC_KEYWORDS eşleşmesi bulunamadı, havuzdaki konularla devam ediliyor.")
+                # available zaten dolu, filtre uygulanmadan devam
 
     if len(available) == 1:
         topic = available[0]
