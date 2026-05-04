@@ -26,32 +26,48 @@ def generate_thumbnail(
     title: str,
     thumbnail_text: str,
     output_path: str = "output/thumbnail.png",
+    hz: float = None,
 ) -> str:
     """
-    Siyah/kırmızı degrade arka plan üzerine dramatik başlık metni içeren
     1280×720 PNG thumbnail üretir.
+    hz verilirse Hz modu (mavi degrade + Hz badge), yoksa war modu (kırmızı degrade + WHAT IF? badge).
     """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     img = Image.new("RGB", (THUMB_W, THUMB_H), color=(0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # Kırmızı degrade — sol üst köşeden sağ alta doğru
-    for x in range(THUMB_W // 2):
-        alpha = int(180 * (1 - x / (THUMB_W // 2)))
-        r = min(255, 180 + alpha // 3)
-        g = 0
-        b = 0
-        for y in range(THUMB_H):
-            dist = ((x ** 2 + y ** 2) ** 0.5) / ((THUMB_W ** 2 + THUMB_H ** 2) ** 0.5)
-            if dist < 0.5:
-                blend = int(alpha * (1 - dist * 2))
-                cr, cg, cb = img.getpixel((x, y))
-                img.putpixel((x, y), (
-                    min(255, cr + blend),
-                    cg,
-                    cb,
-                ))
+    if hz:
+        # Mavi-mor degrade — Hz/frekans modu
+        for x in range(THUMB_W // 2):
+            alpha = int(180 * (1 - x / (THUMB_W // 2)))
+            for y in range(THUMB_H):
+                dist = ((x ** 2 + y ** 2) ** 0.5) / ((THUMB_W ** 2 + THUMB_H ** 2) ** 0.5)
+                if dist < 0.5:
+                    blend = int(alpha * (1 - dist * 2))
+                    cr, cg, cb = img.getpixel((x, y))
+                    img.putpixel((x, y), (
+                        min(255, cr + blend // 6),
+                        min(255, cg + blend // 4),
+                        min(255, cb + blend),
+                    ))
+    else:
+        # Kırmızı degrade — war modu
+        for x in range(THUMB_W // 2):
+            alpha = int(180 * (1 - x / (THUMB_W // 2)))
+            r = min(255, 180 + alpha // 3)
+            g = 0
+            b = 0
+            for y in range(THUMB_H):
+                dist = ((x ** 2 + y ** 2) ** 0.5) / ((THUMB_W ** 2 + THUMB_H ** 2) ** 0.5)
+                if dist < 0.5:
+                    blend = int(alpha * (1 - dist * 2))
+                    cr, cg, cb = img.getpixel((x, y))
+                    img.putpixel((x, y), (
+                        min(255, cr + blend),
+                        cg,
+                        cb,
+                    ))
 
     # Büyük ana metin (thumbnail_text — 4 kelimeye kadar, ALL CAPS)
     main_font_size = 140
@@ -96,10 +112,18 @@ def generate_thumbnail(
     draw.text((x + 2, y + 2), sub_text, font=sub_font, fill=(0, 0, 0))
     draw.text((x, y), sub_text, font=sub_font, fill=(255, 215, 0))  # Altın sarısı
 
-    # "WHAT IF?" etiketi — sol üst köşe
+    # Sol üst köşe badge — Hz modunda frekans etiketi, war modunda "WHAT IF?"
     tag_font = _load_font(36)
-    draw.rectangle([(20, 20), (220, 72)], fill=(180, 0, 0))
-    draw.text((30, 28), "WHAT IF?", font=tag_font, fill=(255, 255, 255))
+    if hz:
+        badge_label = f"{hz:.0f} Hz"
+        badge_color = (10, 30, 120)   # koyu mavi — frekans kimliği
+        badge_w = 180
+    else:
+        badge_label = "WHAT IF?"
+        badge_color = (180, 0, 0)     # kırmızı — war kimliği
+        badge_w = 200
+    draw.rectangle([(20, 20), (20 + badge_w, 72)], fill=badge_color)
+    draw.text((30, 28), badge_label, font=tag_font, fill=(255, 255, 255))
 
     img.save(output_path, "PNG", optimize=True)
     print(f"[thumbnail] Thumbnail kaydedildi: {output_path}")
