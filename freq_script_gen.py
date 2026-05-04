@@ -99,9 +99,7 @@ def _repair_and_extract_json(text: str) -> dict:
     raise ValueError(f"JSON parse edilemedi (repair de başarısız):\n{raw[:400]}")
 
 
-PROMPT_TEMPLATE = """You are a YouTube Shorts optimization expert specializing in healing frequency and meditation content.
-
-Generate viral metadata for a YouTube Short about this healing frequency:
+PROMPT_TEMPLATE = """You are a viral YouTube Shorts creator for healing frequency content. Study the top-performing channel "Neural Frequency Sounds" and replicate their exact title/hook/tag strategy.
 
 Frequency: {hz} Hz
 Name: {name}
@@ -109,19 +107,60 @@ Key Benefit: {benefit}
 Mood: {mood}
 Description: {description}
 
-HOOK INSPIRATION (pick or remix the best one):
+HOOK INSPIRATION (use as base, then upgrade with Neuro-Frequency language):
 {hooks_str}
 
-RULES:
-- title: ≤60 chars. Format: "[Hz] Hz | [Benefit Keyword] | [Action Word]"
-  Example: "528 Hz | DNA Repair | Listen Until The End"
-- hook_line: The SINGLE most compelling line shown on screen. ≤12 words. Must start with "If you listen to this" or "This [Hz] Hz sound will" or similar.
-  This is shown as large text overlay on the video.
-- hook_subtext: Small subtext under hook_line. ≤8 words. Creates urgency or curiosity. Can be empty string.
-- thumbnail_text: 2-4 WORD CAPS for thumbnail. Examples: "DNA REPAIR", "MIRACLE FREQUENCY", "FEEL THE SHIFT"
-- cta_line: 1 sentence for end screen. Example: "Follow for daily healing frequencies."
-- description: 80-120 word SEO-optimized YouTube description. Mention the Hz, benefits, timestamps if applicable. End with relevant hashtags on new lines.
-- tags: 10-15 relevant YouTube tags (strings). Include the exact Hz number, "solfeggio", "healing frequency", "meditation", specific benefit keywords.
+━━━ TITLE RULES (Neural Frequency Sounds style) ━━━
+Format: "[Hz] Hz [emoji] Neuro-[Action] – [Outcome 1] & [Outcome 2] | Meditation Music"
+- ≤60 chars total
+- Emoji must match mood: 🧘‍♀️ sleep | ⚡ focus/energy | 🌿 healing | 🔮 spiritual | 🌊 calm | 🧠 brain
+- "Neuro-[Action]" examples: Neuro-Detox, Neuro-Reset, Neural Activation, Neural Clarity, Neuro-Boost
+- Outcomes must be SPECIFIC and physiological:
+  GOOD: "Purge Cortisol & Reset Emotional Balance", "Flush Anxiety & Rewire Sleep Patterns", "Boost GABA & Calm the Nervous System"
+  BAD: "Relax and Sleep", "Feel Better", "Healing Music"
+- End ALWAYS with "| Meditation Music"
+
+━━━ HOOK LINE RULES ━━━
+- Shown as large overlay text on screen. ≤12 words.
+- Do NOT always start with "If you listen to this" — vary the formula:
+  * "[Hz] Hz is activating your [brain region/system] right now..."
+  * "Your nervous system is about to reset. Stay until the end."
+  * "This neuro-frequency flushes [specific thing] in [time]..."
+  * "Let [Hz] Hz reprogram your [emotion/system] while you watch."
+- Must create PHYSICAL sensation in the reader's mind — they should feel it.
+
+━━━ HOOK SUBTEXT ━━━
+≤8 words. Creates curiosity/urgency. Examples:
+- "Most people feel it within 30 seconds."
+- "Use headphones for full neural effect."
+- "Your body knows what to do with this."
+
+━━━ THUMBNAIL TEXT ━━━
+2-4 ALL CAPS words. Use Neuro-Frequency language:
+NEURO DETOX | NEURAL RESET | CORTISOL FLUSH | FREQ ACTIVATE | BRAIN REWIRE | MOOD SHIFT | DEEP RESET
+
+━━━ CTA LINE ━━━
+Neural Frequency Sounds style. Examples:
+- "Follow for daily neuro-frequency sessions."
+- "Subscribe — your nervous system will thank you."
+- "Follow for frequencies that actually work."
+
+━━━ DESCRIPTION ━━━
+80-120 words. Structure:
+1. Open with the physiological benefit (what this Hz does to the body/brain)
+2. Mention specific brain waves or bodily systems affected
+3. "🎧 Use headphones for full binaural effect."
+4. List 3 best use cases (sleep, study, anxiety relief, etc.)
+5. Close with follow CTA
+End with relevant hashtags on new lines.
+
+━━━ TAGS ━━━
+12-15 tags. Must include:
+- Exact Hz number: "{hz} Hz"
+- "Neuro-Frequency", "Neural Frequency", "Healing Frequency"
+- Specific physiological keywords from the benefit (e.g. "Cortisol Relief", "Nervous System Reset")
+- Brainwave type if applicable (Delta Waves, Theta, Alpha, Gamma, etc.)
+- "Binaural Beats", "Solfeggio Frequencies", "Meditation Music", "Sleep Music" or "Focus Music"
 
 Output ONLY valid JSON:
 {{
