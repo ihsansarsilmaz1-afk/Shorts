@@ -170,37 +170,10 @@ _DESC_CTA = {
     "ar": "تابعنا للمزيد من التحليلات العسكرية اليومية!",
 }
 
-_HZ_DESC_TEMPLATE = (
-    "{hz:.0f} Hz {hz_name} frequency embedded. {hz_benefit}.\n"
-    "🎧 Use headphones for full binaural effect.\n\n"
-    "{title}\n\n"
-    "{hook}\n\n"
-    "Follow for daily military intel + frequency sessions.\n\n"
-    "{topic_hashtags}\n"
-    "#Shorts #BinauralBeats #{hz_int}Hz #GammaWaves #NeuralFocus #MilitaryIntelligence #FocusFrequency"
-)
-
 _BASE_HASHTAGS = ["#Shorts", "#Military", "#BreakingNews", "#Geopolitics", "#WarNews"]
 
 
 def build_description(script: dict) -> str:
-    # Hz modu: özel açıklama formatı (Neural Frequency Sound channel inspired)
-    if script.get("hz"):
-        script_tags = script.get("tags", [])
-        topic_hashtags = " ".join(
-            f"#{t.replace(' ', '').replace('-', '')}"
-            for t in script_tags if t and t.isascii()
-        )
-        return _HZ_DESC_TEMPLATE.format(
-            hz=float(script["hz"]),
-            hz_name=script.get("hz_name", "Gamma"),
-            hz_benefit=script.get("hz_benefit", "Activates peak focus for intelligence analysis"),
-            title=script.get("title", ""),
-            hook=script.get("hook", ""),
-            topic_hashtags=topic_hashtags,
-            hz_int=int(float(script["hz"])),
-        )
-
     lang = script.get("language", "en")
     cta_line = _DESC_CTA.get(lang, _DESC_CTA["en"])
 

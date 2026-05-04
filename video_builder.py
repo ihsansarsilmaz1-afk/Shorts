@@ -2667,51 +2667,6 @@ def _build_sfx_audio(audio_duration: float) -> list:
     return sfx_clips
 
 
-# ─── Hz badge overlay (Neuro-Intelligence modu) ─────────────────────────────
-
-def _make_hz_badge_clip(hz: float, hz_name: str, hz_emoji: str, total_duration: float) -> ImageClip:
-    """
-    Video sol alt köşesine '🎧 40 Hz GAMMA' formatında küçük kalıcı badge ekler.
-    Neural Frequency Sound kanalının stil kimliğini yansıtır.
-    """
-    badge_w, badge_h = 320, 56
-    img = Image.new("RGBA", (badge_w, badge_h), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-
-    # Koyu mavi-mor yarı saydam zemin
-    draw.rounded_rectangle([(0, 0), (badge_w - 1, badge_h - 1)], radius=12, fill=(8, 18, 80, 210))
-
-    # Sol accent çizgisi
-    draw.rectangle([(0, 0), (4, badge_h - 1)], fill=(80, 140, 255, 255))
-
-    font_size = 26
-    font = None
-    for path in FONT_CANDIDATES:
-        if os.path.exists(path):
-            try:
-                font = ImageFont.truetype(path, font_size)
-                break
-            except OSError:
-                continue
-    if font is None:
-        font = ImageFont.load_default()
-
-    label = f"🎧 {hz:.0f} Hz {hz_name.upper()}"
-    draw.text((14, 14), label, font=font, fill=(180, 210, 255, 255))
-
-    arr = np.array(img)
-    x_pos = 24
-    y_pos = TARGET_H - badge_h - 100   # alt barın biraz üstü
-
-    return (
-        ImageClip(arr, ismask=False)
-        .set_duration(total_duration)
-        .set_start(0)
-        .set_position((x_pos, y_pos))
-        .crossfadein(0.5)
-    )
-
-
 # ─── Ana fonksiyon ───────────────────────────────────────────────────────────
 
 def build_video(
@@ -2815,15 +2770,6 @@ def build_video(
 
     # CTA bitiş ekranı
     layers.extend(_make_cta_clip(total_duration, language=lang))
-
-    # Hz badge (Neuro-Intelligence modu)
-    if script.get("hz"):
-        layers.append(_make_hz_badge_clip(
-            hz=float(script["hz"]),
-            hz_name=script.get("hz_name", ""),
-            hz_emoji=script.get("hz_emoji", ""),
-            total_duration=total_duration,
-        ))
 
     # Logo/watermark
     wm = _make_watermark_clip(total_duration)

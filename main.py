@@ -19,7 +19,6 @@ Yeni özellikler (v2):
 import argparse
 import json
 import os
-import subprocess
 import sys
 import traceback
 from datetime import date  # noqa: F401 (used by topic_selector)
@@ -67,38 +66,6 @@ from smart_scheduler import should_upload_now
 OUTPUT_DIR = "output"
 USED_TOPICS_PATH = "used_topics.json"
 LAST_VIDEO_PATH = os.path.join(OUTPUT_DIR, "last_video.json")
-
-
-def _mix_hz_background(narration_path: str, hz: float, duration_sec: float) -> str:
-    """
-    TTS narasyonunu (%85) Hz arka plan tonuyla (%15) karıştırır.
-    Neural Frequency Sound kanalının binaural katman stratejisi.
-    Çıktı: output/narration_hz.mp3
-    """
-    from freq_audio_gen import generate_frequency_audio
-
-    hz_path = os.path.join(OUTPUT_DIR, "hz_bg.mp3")
-    out_path = os.path.join(OUTPUT_DIR, "narration_hz.mp3")
-
-    # Hz arka plan tonunu narrasyon süresinden biraz uzun üret (loop sorunu önleme)
-    generate_frequency_audio(hz=hz, output_mp3=hz_path, duration_sec=duration_sec + 5.0)
-
-    cmd = [
-        "ffmpeg", "-y",
-        "-i", narration_path,
-        "-i", hz_path,
-        "-filter_complex",
-        "[0:a]volume=1.0[speech];[1:a]volume=0.15,afade=t=in:st=0:d=2,afade=t=out:st={:.1f}:d=2[tone];[speech][tone]amix=inputs=2:duration=first".format(max(0, duration_sec - 2)),
-        "-c:a", "libmp3lame", "-b:a", "192k",
-        out_path,
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"[main] Hz ses karıştırma başarısız (kritik değil): {result.stderr[-300:]}")
-        return narration_path   # fallback: karıştırmasız narrasyon kullan
-
-    print(f"[main] Hz arka plan karıştırıldı: {hz} Hz @ %15 — {out_path}")
-    return out_path
 
 # Dil ayarı: "en" veya "tr"
 LANGUAGE = os.environ.get("LANGUAGE", "en")
@@ -286,21 +253,15 @@ def run(dry_run: bool = False, topic_override: str = None) -> None:
         duration_sec = clip.duration
         clip.close()
 
-        # 3b) Hz modu: arka plan frekans tonunu karıştır
-        if LANGUAGE == "hz" and script.get("hz"):
-            print(f"\n[main] Hz modu — {script['hz']} Hz arka plan tonu karıştırılıyor...")
-            audio_path = _mix_hz_background(audio_path, float(script["hz"]), duration_sec)
-
         # 4) Video
         print("\n[main] Video üretiliyor (3 klip + CTA + crossfade)...")
         video_path = _step("video", lambda: build_video(script, audio_path, vtt_path), topic)
 
         # 5) Thumbnail
         print("\n[main] Thumbnail üretiliyor...")
-        _hz_val = float(script["hz"]) if (LANGUAGE == "hz" and script.get("hz")) else None
         thumb_path = _step(
             "thumbnail",
-            lambda: generate_thumbnail(script["title"], script["thumbnail_text"], hz=_hz_val),
+            lambda: generate_thumbnail(script["title"], script["thumbnail_text"]),
             topic,
         )
 
@@ -324,17 +285,8 @@ def run(dry_run: bool = False, topic_override: str = None) -> None:
 
     # Upload tag'ları: script tags (Gemini) + sabit base tags
     # NOT: search_keywords tag olarak kullanılmaz — footage sorguları, tag değil
-    if LANGUAGE == "hz" and script.get("hz"):
-        _hz_base = [
-            "Shorts", "Military", "Geopolitics", "War News",
-            "Binaural Beats", "Focus Frequency", "Hz Frequency",
-            f"{script['hz']:.0f} Hz", script.get("hz_name", "Gamma"),
-            "Neural Focus", "Military Intelligence", "Brain Waves",
-        ]
-        upload_tags = list(dict.fromkeys(script["tags"] + _hz_base))
-    else:
-        _base_tags = ["Shorts", "Military", "Breaking News", "Geopolitics", "War News", "Military News"]
-        upload_tags = list(dict.fromkeys(script["tags"] + _base_tags))  # dedup, boşluklar korunur
+    _base_tags = ["Shorts", "Military", "Breaking News", "Geopolitics", "War News", "Military News"]
+    upload_tags = list(dict.fromkeys(script["tags"] + _base_tags))  # dedup, boşluklar korunur
 
     # 6) YouTube upload
     print("\n[main] YouTube'a yükleniyor...")

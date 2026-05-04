@@ -107,63 +107,6 @@ DÖNGÜ TASARIMI: Narrasyonun son cümlesi açılış hook'unu yansıtmalı — 
 }""",
     },
 
-    "hz": {
-        "news_analysis": """You are a viral YouTube Shorts creator specializing in NEURO-INTELLIGENCE content — military analysis delivered while activating specific brainwave frequencies.
-
-Your unique format: a powerful Hz frequency that ENHANCES the viewer's ability to process military intelligence, combined with hard-hitting war analysis that REQUIRES that enhanced mental state to fully understand.
-
-HZ SELECTION — pick the BEST frequency for THIS specific topic:
-- 40 Hz  (Gamma ⚡): Fast-moving intel — troop movements, missile launches, tactical threats
-- 528 Hz (Truth  🔬): Exposing hidden agendas — covert ops, nuclear programs, shadow wars
-- 741 Hz (Clarity 🧿): Cutting through propaganda — decoding media narratives, disinformation
-- 852 Hz (Pattern 🧩): Recognizing strategic patterns — geopolitical chess moves across months
-- 963 Hz (Vision  🌐): Long-term power shifts — decade-level geopolitics, civilizational conflicts
-- 432 Hz (Balance 🌍): Balance of power analysis — alliances, deterrence, military equilibrium
-
-TITLE FORMAT (Neural Frequency style):
-[Hz] Hz [emoji] Neural [Action] – [War Topic] | Military Intelligence
-Examples:
-- "40 Hz ⚡ Gamma Focus – China's Navy Decoded | Military Intelligence"
-- "528 Hz 🔬 Truth Frequency – What Iran Is Really Building | Intel Briefing"
-- "741 Hz 🧿 Neural Clarity – Cut Through Russia Propaganda | War Analysis"
-
-HOOK FORMULA — combine Hz activation + war urgency in ONE punch:
-- "Your [Hz] Hz [brainwave] just activated. Here's what [country] doesn't want you to process clearly."
-- "Tune to [Hz] Hz [brainwave name]. The truth about [event] is about to become clear."
-- "[Hz] Hz [brainwave] — the only state to understand what [country] just did."
-
-SCRIPT STRUCTURE (25-30 seconds):
-0-3s  HOOK: Hz activation + war urgency fused — maximum impact
-3-8s  CONTEXT: Specific names, weapons, numbers — 2 punchy sentences
-8-16s ANALYSIS: "Here's what your gamma state is detecting that others miss..."
-16-24s ESCALATION: The scenario. "If this continues, your pattern recognition already knows..."
-24-28s CLOSE + CTA: "Follow for daily intel. Your [brainwave] will be ready."
-
-Output ONLY valid JSON:
-{
-  "title": "...",
-  "hook": "...",
-  "narration": "Full 40-50 word script",
-  "tags": ["40 Hz", "Gamma Waves", "China Military", "Naval Intelligence", "Focus Frequency", "Military Analysis", "Binaural Beats"],
-  "thumbnail_text": "4 WORD CAPS",
-  "search_keywords": ["specific visual 1", "specific visual 2", "specific visual 3", "specific visual 4", "specific visual 5", "specific visual 6", "specific visual 7", "specific visual 8", "specific visual 9", "specific visual 10"],
-  "mood": "focus",
-  "format": "news_analysis",
-  "hz": 40.0,
-  "hz_name": "Gamma",
-  "hz_emoji": "⚡",
-  "hz_benefit": "peak focus and military pattern recognition"
-}
-
-CRITICAL:
-- tags MUST combine WAR keywords + HZ keywords: country names, weapon systems + Hz value, brainwave name, "Binaural Beats", "Focus Frequency"
-- thumbnail_text: fuse Hz + impact word — "40HZ DECODED", "GAMMA INTEL", "528HZ TRUTH", "NEURAL THREAT"
-- search_keywords: 10 specific YouTube queries for WAR FOOTAGE (real weapon/unit/location + action — same rules as standard war)
-- narration: 40-50 words, present tense, short sentences. Mention the brainwave state at least once mid-narration.
-- NEVER use placeholder brackets — real names, real weapons, real locations
-- LOOP DESIGN: last sentence mirrors the Hz activation from the hook, triggering replays""",
-    },
-
     "ar": {
         "news_analysis": """أنت محلل عسكري على يوتيوب شورتس تحلل الأحداث الجارية للجمهور العربي.
 
@@ -227,7 +170,6 @@ TTS_VOICES = {
     "en": "en-US-GuyNeural",
     "tr": "tr-TR-AhmetNeural",
     "ar": "ar-SA-HamedNeural",
-    "hz": "en-US-GuyNeural",
 }
 
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
@@ -443,18 +385,6 @@ RETENTION KURALLARI (tam olarak uygula):
 2. Ortada merak döngüsü kur: "Ama kimsenin konuşmadığı şey şu..." veya "Ve bu her şeyi değiştiriyor..." gibi bir cümleyle izleyiciyi ekranda tut.
 3. Narrasyonu ileriye dönük gerilimle bitir: "Sonraki 72 saat her şeyi belirleyecek." veya "Sırada ne olduğunu tahmin edemezsiniz."
 4. Tüm metin gizli istihbarat brifingiymiş gibi olsun.
-{avoid_note}""",
-        },
-        "hz": {
-            "news_analysis": f"""Write a Neuro-Intelligence YouTube Shorts script about: {topic}
-
-Select the BEST Hz frequency for this specific topic. The Hz choice must make psychological sense — pick the frequency that most enhances the mental state needed to understand THIS event.
-
-RETENTION RULES:
-1. Start immediately with Hz activation + war hook fused in one sentence. No preamble.
-2. Around midpoint: "Your [brainwave] is detecting something most people miss..." to lock viewers.
-3. End with frequency-loop closer: "Stay in [frequency name]. What comes next will require it."
-4. Sound like a classified briefing processed with enhanced brainwave power.
 {avoid_note}""",
         },
         "ar": {
