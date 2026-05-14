@@ -194,7 +194,7 @@ def run(dry_run: bool = False, hz_override: float = None) -> None:
     base_tags = [
         "Neuro-Frequency", "Neural Frequency", "Healing Frequency", "Meditation Music",
         "Binaural Beats", "Solfeggio Frequencies", "Nervous System", "Brain Waves",
-        "Sound Therapy", "Shorts",
+        "Sound Therapy", "ADHD", "ADHD Focus", "Shorts",
     ]
     upload_tags = list(dict.fromkeys(script["tags"] + base_tags))
 
