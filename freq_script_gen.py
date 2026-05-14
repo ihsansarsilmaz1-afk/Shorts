@@ -233,13 +233,13 @@ RULES:
 Title: {title}
 Description: {description}
 
-Languages: es, fr, pt, de, tr, ar, ja, ko, hi, it, ru, zh
+Languages: es, fr, pt, de, tr, ar, ja, ko, hi, it, ru, zh-Hans
 
 Output ONLY valid JSON with ALL 12 languages:
-{{"es":{{"title":"...","description":"..."}},"fr":{{"title":"...","description":"..."}},"pt":{{"title":"...","description":"..."}},"de":{{"title":"...","description":"..."}},"tr":{{"title":"...","description":"..."}},"ar":{{"title":"...","description":"..."}},"ja":{{"title":"...","description":"..."}},"ko":{{"title":"...","description":"..."}},"hi":{{"title":"...","description":"..."}},"it":{{"title":"...","description":"..."}},"ru":{{"title":"...","description":"..."}},"zh":{{"title":"...","description":"..."}}}}
+{{"es":{{"title":"...","description":"..."}},"fr":{{"title":"...","description":"..."}},"pt":{{"title":"...","description":"..."}},"de":{{"title":"...","description":"..."}},"tr":{{"title":"...","description":"..."}},"ar":{{"title":"...","description":"..."}},"ja":{{"title":"...","description":"..."}},"ko":{{"title":"...","description":"..."}},"hi":{{"title":"...","description":"..."}},"it":{{"title":"...","description":"..."}},"ru":{{"title":"...","description":"..."}},"zh-Hans":{{"title":"...","description":"..."}}}}
 """
 
-TARGET_LANGS = ["es", "fr", "pt", "de", "tr", "ar", "ja", "ko", "hi", "it", "ru", "zh"]
+TARGET_LANGS = ["es", "fr", "pt", "de", "tr", "ar", "ja", "ko", "hi", "it", "ru", "zh-Hans"]
 
 
 def generate_localizations(script: dict) -> dict:
