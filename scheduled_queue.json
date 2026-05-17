@@ -9,5 +9,136 @@
     "thumbnail_path": "batch_output\\2026-03-18\\thumbnail.png",
     "language": "en",
     "published": false
+  },
+  {
+    "scheduled_date": "2026-03-19",
+    "topic": "What if Iran Closes the Strait of Hormuz Tomorrow?",
+    "title": "20% Oil Flow STOPPED! What Happens?",
+    "script_path": "batch_output/2026-03-19/script.json",
+    "video_path": "batch_output/2026-03-19/short.mp4",
+    "audio_path": "batch_output/2026-03-19/narration.mp3",
+    "thumbnail_path": "batch_output/2026-03-19/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "Only 10% get this right! If Hormuz closes, what's MORE likely: ⛽️ global recession OR 🚢 shipping chaos? Vote below! 👇 A) Recession B) Chaos",
+      "community_poll": {
+        "text": "If 20% of global oil flow through the Strait of Hormuz was *permanently* stopped, which outcome do you think is most likely? 🌍⛽",
+        "poll_options": [
+          "Global recession",
+          "Renewed Middle East war",
+          "Rapid EV adoption",
+          "New shipping routes"
+        ]
+      },
+      "debate_starter": "Closing the Strait of Hormuz is the only way for Iran to truly assert its sovereignty. Should the world intervene? 🌍",
+      "prediction_game": "🎯 PREDICTION GAME: What happens by end of 2026?\n\nDrop your prediction — I'll pin the best one! 📌\n\nMost creative prediction wins a shoutout! 🏆"
+    },
+    "score": 62
+  },
+  {
+    "scheduled_date": "2026-03-20",
+    "topic": "What if Iran and Saudi Arabia Go to Full War?",
+    "title": "Iran vs. Saudi: Oil War Imminent?",
+    "script_path": "batch_output/2026-03-20/script.json",
+    "video_path": "batch_output/2026-03-20/short.mp4",
+    "audio_path": "batch_output/2026-03-20/narration.mp3",
+    "thumbnail_path": "batch_output/2026-03-20/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iran vs. Saudi: Oil War Imminent?... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🔮 CRYSTAL BALL TIME: Iran vs. Saudi: Oil War Imminent?\n\nComment your wildest theory about what happens next.\nWrong answers only 😂👇"
+    },
+    "score": 66
+  },
+  {
+    "scheduled_date": "2026-03-21",
+    "topic": "Nuclear-Powered Cruise Missiles: Russia's Unlimited Range Weapon",
+    "title": "Russia's Nuclear Cruise Missile: NO ESCAPE",
+    "script_path": "batch_output/2026-03-21/script.json",
+    "video_path": "batch_output/2026-03-21/short.mp4",
+    "audio_path": "batch_output/2026-03-21/narration.mp3",
+    "thumbnail_path": "batch_output/2026-03-21/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Russia's Nuclear Cruise Missile: NO ESCA... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🎯 PREDICTION GAME: What happens by end of 2026?\n\nDrop your prediction — I'll pin the best one! 📌\n\nMost creative prediction wins a shoutout! 🏆"
+    },
+    "score": 53
+  },
+  {
+    "scheduled_date": "2026-03-22",
+    "topic": "What if Iran Gets Nuclear Weapons?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-03-23",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "Iran's Shadow Army: Global Threat",
+    "script_path": "batch_output/2026-03-23/script.json",
+    "video_path": "batch_output/2026-03-23/short.mp4",
+    "audio_path": "batch_output/2026-03-23/narration.mp3",
+    "thumbnail_path": "batch_output/2026-03-23/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iran's Shadow Army: Global Threat... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🎯 PREDICTION GAME: What happens by end of 2026?\n\nDrop your prediction — I'll pin the best one! 📌\n\nMost creative prediction wins a shoutout! 🏆"
+    },
+    "score": 51
+  },
+  {
+    "scheduled_date": "2026-03-24",
+    "topic": "Israel's Secret Nuclear Arsenal: What We Know",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-03-25",
+    "topic": "Israel's Trophy System: Why Tanks Are Almost Impossible to Destroy",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
