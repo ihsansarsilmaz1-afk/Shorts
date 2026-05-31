@@ -254,5 +254,119 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-02",
+    "topic": "Israel's Iron Dome: How It Actually Works",
+    "title": "Iron Dome: Israel's FINAL Defense?",
+    "script_path": "batch_output/2026-04-02/script.json",
+    "video_path": "batch_output/2026-04-02/short.mp4",
+    "audio_path": "batch_output/2026-04-02/narration.mp3",
+    "thumbnail_path": "batch_output/2026-04-02/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "Only 10% get this right... 🤔 Was Iron Dome *truly* Israel's FINAL defense, or just the FIRST line? 🚀 Tell us below! 👇 A) Final B) First C) Both!",
+      "community_poll": {
+        "text": "Is the Iron Dome a game-changer, or just a temporary fix? 🤔 Let's discuss! 🇮🇱",
+        "poll_options": [
+          "Game-changer",
+          "Temporary fix",
+          "Needs upgrade",
+          "Overrated"
+        ]
+      },
+      "debate_starter": "Iron Dome's success makes escalation seem less risky. Is that a dangerous trap? 🤔",
+      "prediction_game": "🎯 PREDICTION GAME: What happens by end of 2026?\n\nDrop your prediction — I'll pin the best one! 📌\n\nMost creative prediction wins a shoutout! 🏆"
+    },
+    "score": 53
+  },
+  {
+    "scheduled_date": "2026-04-03",
+    "topic": "[NEWS] Iran war day 93: Here's What It Means for the World",
+    "title": "84% Uranium: Iran's SECRET Nuke?",
+    "script_path": "batch_output/2026-04-03/script.json",
+    "video_path": "batch_output/2026-04-03/short.mp4",
+    "audio_path": "batch_output/2026-04-03/narration.mp3",
+    "thumbnail_path": "batch_output/2026-04-03/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "Only 10% get this right! 🤔 Iran's 84% uranium: \nA) Deterrence 🛡️ \nB) Regional dominance 👑\nC) A bluff? 🃏 \nWhat's their REAL endgame? 👇",
+      "community_poll": {
+        "text": "Is Iran's nuclear program truly a threat to global peace? 🌍 Let's settle this debate! 🤔",
+        "poll_options": [
+          "Major threat",
+          "Minor threat",
+          "No real threat",
+          "Misinformation"
+        ]
+      },
+      "debate_starter": "Iran's 84% enrichment is a calculated move, not a \"secret\" weapon. They're leveraging brinkmanship for leverage. What are *we* willing to concede? 🤔",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 54
+  },
+  {
+    "scheduled_date": "2026-04-04",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "IRAN'S SECRET ARMY: The Global Threat Nobody Sees!",
+    "script_path": "batch_output/2026-04-04/script.json",
+    "video_path": "batch_output/2026-04-04/short.mp4",
+    "audio_path": "batch_output/2026-04-04/narration.mp3",
+    "thumbnail_path": "batch_output/2026-04-04/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on IRAN'S SECRET ARMY: The Global Threat No... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 61
+  },
+  {
+    "scheduled_date": "2026-04-05",
+    "topic": "Israel's AI-Powered Battlefield: The Future Is Already Here",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-06",
+    "topic": "What if Iran and Israel Launch Full Nuclear War?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-07",
+    "topic": "What if Iran and Saudi Arabia Go to Full War?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-08",
+    "topic": "Iran's Hypersonic Missile Program: Should the World Worry?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
