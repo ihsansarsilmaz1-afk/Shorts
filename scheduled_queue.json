@@ -579,5 +579,102 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-23",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "Is Iran's Proxy Force the BIGGEST Threat?",
+    "script_path": "batch_output/2026-04-23/script.json",
+    "video_path": "batch_output/2026-04-23/short.mp4",
+    "audio_path": "batch_output/2026-04-23/narration.mp3",
+    "thumbnail_path": "batch_output/2026-04-23/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "Is Iran's proxy network the *real* superpower? 🤔 Only 10% get this right...\n\nA) Yes, it's unmatched! 🚀\nB) No, nation-states still dominate. 👑\nC) It's a unique, evolving threat. 💥\n\nVote below! 👇",
+      "community_poll": {
+        "text": "Is Iran's growing proxy network the MOST dangerous global threat right now? 🤔 Let's settle this! 💥",
+        "poll_options": [
+          "Hezbollah is key",
+          "Houthis are the threat",
+          "IRGC is the problem",
+          "It's all connected"
+        ]
+      },
+      "debate_starter": "Iran's proxies aren't the threat, they're a symptom of Western foreign policy failures. Agree? 🤔",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 63
+  },
+  {
+    "scheduled_date": "2026-04-24",
+    "topic": "[NEWS] Iran attacks Kuwait and Bahrain in response to US strikes: Here's What It Means for the World",
+    "title": "Iran vs US: Chaos in Kuwait?",
+    "script_path": "batch_output/2026-04-24/script.json",
+    "video_path": "batch_output/2026-04-24/short.mp4",
+    "audio_path": "batch_output/2026-04-24/narration.mp3",
+    "thumbnail_path": "batch_output/2026-04-24/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🔥 Bold prediction time: How does this end?\n\nA) Escalation 💥\nB) Diplomacy 🤝\nC) Surprise twist 🔄\n\nDrop your answer! 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iran vs US: Chaos in Kuwait?... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 51
+  },
+  {
+    "scheduled_date": "2026-04-25",
+    "topic": "[NEWS] Why Middle East Violence Escalates as Iran and Joint US‑Israel Forces Laun Changes Everything",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-26",
+    "topic": "Israel's AI-Powered Battlefield: The Future Is Already Here",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-27",
+    "topic": "Israel's Trophy System: Why Tanks Are Almost Impossible to Destroy",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-28",
+    "topic": "Israel's Arrow 3: The Missile That Can Intercept in Space",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-29",
+    "topic": "UAE vs Iran: The Hidden Arms Race in the Gulf",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
