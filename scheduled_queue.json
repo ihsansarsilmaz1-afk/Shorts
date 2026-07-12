@@ -676,5 +676,119 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-04-30",
+    "topic": "[NEWS] US launches fresh strikes as Iran closes Strait of Hormuz: Here's What It Means for the World",
+    "title": "US Strikes Iran: Strait of Hormuz BLOCKADE IMMINENT?",
+    "script_path": "batch_output/2026-04-30/script.json",
+    "video_path": "batch_output/2026-04-30/short.mp4",
+    "audio_path": "batch_output/2026-04-30/narration.mp3",
+    "thumbnail_path": "batch_output/2026-04-30/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🔥 Only 10% get this right! If Hormuz closes, will oil prices skyrocket 📈 or trigger a global recession 📉? Vote below! 👇",
+      "community_poll": {
+        "text": "The world holds its breath! Should the US respond forcefully to Iranian aggression, or is de-escalation the only path forward? 🇺🇸🇮🇷",
+        "poll_options": [
+          "Full Retaliation",
+          "Targeted Strikes",
+          "Diplomacy First",
+          "Economic Sanctions"
+        ]
+      },
+      "debate_starter": "This escalation is a calculated move to justify a permanent US military presence in the region. 🤔",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 58
+  },
+  {
+    "scheduled_date": "2026-05-01",
+    "topic": "[NEWS] IRGC vows ‘crushing response’ to any further US attacks: Here's What It Means for the World",
+    "title": "IRGC's Secret Plan: What Happens Next?",
+    "script_path": "batch_output/2026-05-01/script.json",
+    "video_path": "batch_output/2026-05-01/short.mp4",
+    "audio_path": "batch_output/2026-05-01/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-01/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🔥 Bold prediction time: How does this end?\n\nA) Escalation 💥\nB) Diplomacy 🤝\nC) Surprise twist 🔄\n\nDrop your answer! 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on IRGC's Secret Plan: What Happens Next?... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 60
+  },
+  {
+    "scheduled_date": "2026-05-02",
+    "topic": "[NEWS] US CENTCOM completes third round of strikes on Iran: Here's What It Means for the World",
+    "title": "US Strikes Iran: CENTCOM's New Strategy",
+    "script_path": "batch_output/2026-05-02/script.json",
+    "video_path": "batch_output/2026-05-02/short.mp4",
+    "audio_path": "batch_output/2026-05-02/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-02/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on US Strikes Iran: CENTCOM's New Strategy... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 46
+  },
+  {
+    "scheduled_date": "2026-05-03",
+    "topic": "Iran's Drone Army: How They Changed the Middle East",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-05-04",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-05-05",
+    "topic": "Iran's Hypersonic Missile Program: Should the World Worry?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-05-06",
+    "topic": "What if Israel and Iran Go to Full-Scale War?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
