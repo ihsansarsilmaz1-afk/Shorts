@@ -1001,5 +1001,119 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-05-21",
+    "topic": "[NEWS] Trump says he is cancelling strikes on Iran subject to deal being made: Here's What It Means for the World",
+    "title": "Trump & Iran: The Secret Deal? 🤯",
+    "script_path": "batch_output/2026-05-21/script.json",
+    "video_path": "batch_output/2026-05-21/short.mp4",
+    "audio_path": "batch_output/2026-05-21/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-21/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "Did Trump *really* pull back, or was it a bluff? 🤔 Only 10% get this right... A) Genuine de-escalation B) Tactical pause C) Pre-election ploy 🗳️👇",
+      "community_poll": {
+        "text": "Was Trump's Iran approach a brilliant strategy or a dangerous gamble? 🇺🇸🇮🇷 Vote now!",
+        "poll_options": [
+          "Brilliant",
+          "Gambit",
+          "Too Early",
+          "Irrelevant"
+        ]
+      },
+      "debate_starter": "Trump's restraint wasn't about peace, but leveraging Iran's fear. Is this a win for diplomacy or a dangerous gamble? 🤔",
+      "prediction_game": "🔮 CRYSTAL BALL TIME: Trump & Iran: The Secret Deal? 🤯\n\nComment your wildest theory about what happens next.\nWrong answers only 😂👇"
+    },
+    "score": 55
+  },
+  {
+    "scheduled_date": "2026-05-22",
+    "topic": "[NEWS] What Gaza students overcome Israel’s genocide to mark Tawjihi results Really Means for the Future",
+    "title": "Gaza Students' Defiance: A New Palestinian Front?",
+    "script_path": "batch_output/2026-05-22/script.json",
+    "video_path": "batch_output/2026-05-22/short.mp4",
+    "audio_path": "batch_output/2026-05-22/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-22/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "Are these students fighting for their future or becoming pawns? 🤔 Let's discuss. 🇵🇸",
+        "poll_options": [
+          "Future focus",
+          "Political pawn",
+          "Both sides",
+          "Too complex"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 57
+  },
+  {
+    "scheduled_date": "2026-05-23",
+    "topic": "[NEWS] Why Israeli West Bank settler tells BBC attacks on Palestinians are justif Changes Everything",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-05-24",
+    "topic": "[NEWS] IRGC strikes US targets in Kuwait a day after US hits Iran: Here's What It Means for the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-05-25",
+    "topic": "What if Iran and Saudi Arabia Go to Full War?",
+    "title": "Iran-Saudi War: Middle East on Brink",
+    "script_path": "batch_output/2026-05-25/script.json",
+    "video_path": "batch_output/2026-05-25/short.mp4",
+    "audio_path": "batch_output/2026-05-25/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-25/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iran-Saudi War: Middle East on Brink... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🔮 CRYSTAL BALL TIME: Iran-Saudi War: Middle East on Brink\n\nComment your wildest theory about what happens next.\nWrong answers only 😂👇"
+    },
+    "score": 63
+  },
+  {
+    "scheduled_date": "2026-05-26",
+    "topic": "[NEWS] US tightens military and financial pressure as Iran talks falter: Here's What It Means for the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-05-27",
+    "topic": "UAE vs Iran: The Hidden Arms Race in the Gulf",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
