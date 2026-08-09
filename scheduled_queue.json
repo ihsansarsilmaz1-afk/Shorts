@@ -1115,5 +1115,153 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-05-28",
+    "topic": "[NEWS] Hormuz talks positive, Oman says, as Iran warns deal would not open st: Here's What It Means for the World",
+    "title": "Iran's Hormuz MYSTERY: Access or Leverage?",
+    "script_path": "batch_output/2026-05-28/script.json",
+    "video_path": "batch_output/2026-05-28/short.mp4",
+    "audio_path": "batch_output/2026-05-28/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-28/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iran's Hormuz MYSTERY: Access or Leverag... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🔮 CRYSTAL BALL TIME: Iran's Hormuz MYSTERY: Access or Leverag\n\nComment your wildest theory about what happens next.\nWrong answers only 😂👇"
+    },
+    "score": 61
+  },
+  {
+    "scheduled_date": "2026-05-29",
+    "topic": "[NEWS] The U.S. Is Burning Through Weapons in Iran. Russia and China Are Taki: Here's What It Means for the World",
+    "title": "US WEAPONS BURN RATE THREATENS GLOBAL BALANCE",
+    "script_path": "batch_output/2026-05-29/script.json",
+    "video_path": "batch_output/2026-05-29/short.mp4",
+    "audio_path": "batch_output/2026-05-29/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-29/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🔥Only 10% get this right!🔥 US burn rate: 🇺🇦 vs 🇮🇱 - which is the bigger threat to global balance?\nA) Ukraine \nB) Israel\nC) Both equally",
+      "community_poll": {
+        "text": "Are US weapons burn rates actually destabilizing global security? 🤔 Let's debate! 💥",
+        "poll_options": [
+          "Yes, it's reckless",
+          "No, it deters conflict",
+          "It's a necessary evil",
+          "Depends on the weapon"
+        ]
+      },
+      "debate_starter": "We're fueling wars instead of fixing problems at home. Is this sustainable? 🇺🇸",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 59
+  },
+  {
+    "scheduled_date": "2026-05-30",
+    "topic": "[NEWS] Israel announces tender for 627 settler units in occupied West Bank: Here's What It Means for the World",
+    "title": "627 New West Bank Homes: Red Line Crossed?",
+    "script_path": "batch_output/2026-05-30/script.json",
+    "video_path": "batch_output/2026-05-30/short.mp4",
+    "audio_path": "batch_output/2026-05-30/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-30/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "This move solidifies a \"Greater Israel.\" 🤯 Only 10% get this right...\n\nA) It's a land grab. 😠\nB) It's a demographic strategy. 📊\nC) It's a religious imperative. 🙏",
+      "community_poll": {
+        "text": "627 new West Bank homes: Is this a major escalation or a necessary step? 🤔🇵🇸🇮🇱",
+        "poll_options": [
+          "Escalation",
+          "Necessary Step",
+          "Status Quo",
+          "Too Soon to Tell"
+        ]
+      },
+      "debate_starter": "This expansion is a predictable response to regional instability, not the cause. What if security concerns are being ignored? 🤷",
+      "prediction_game": "🔮 CRYSTAL BALL TIME: 627 New West Bank Homes: Red Line Crosse\n\nComment your wildest theory about what happens next.\nWrong answers only 😂👇"
+    },
+    "score": 55
+  },
+  {
+    "scheduled_date": "2026-05-31",
+    "topic": "Israel's Secret Nuclear Arsenal: What We Know",
+    "title": "UNTHINKABLE: Israel's Nuclear Gamble?",
+    "script_path": "batch_output/2026-05-31/script.json",
+    "video_path": "batch_output/2026-05-31/short.mp4",
+    "audio_path": "batch_output/2026-05-31/narration.mp3",
+    "thumbnail_path": "batch_output/2026-05-31/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on UNTHINKABLE: Israel's Nuclear Gamble?... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🎯 PREDICTION GAME: What happens by end of 2026?\n\nDrop your prediction — I'll pin the best one! 📌\n\nMost creative prediction wins a shoutout! 🏆"
+    },
+    "score": 61
+  },
+  {
+    "scheduled_date": "2026-06-01",
+    "topic": "UAE vs Iran: The Hidden Arms Race in the Gulf",
+    "title": "UAE vs Iran: Gulf's Hidden Arms Race",
+    "script_path": "batch_output/2026-06-01/script.json",
+    "video_path": "batch_output/2026-06-01/short.mp4",
+    "audio_path": "batch_output/2026-06-01/narration.mp3",
+    "thumbnail_path": "batch_output/2026-06-01/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🔥 Bold prediction time: How does this end?\n\nA) Escalation 💥\nB) Diplomacy 🤝\nC) Surprise twist 🔄\n\nDrop your answer! 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on UAE vs Iran: Gulf's Hidden Arms Race... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 51
+  },
+  {
+    "scheduled_date": "2026-06-02",
+    "topic": "Iran vs Israel: The Shadow War Nobody Talks About",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-06-03",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
