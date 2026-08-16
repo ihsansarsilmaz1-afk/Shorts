@@ -1263,5 +1263,102 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-06-04",
+    "topic": "[NEWS] Why Qatar denies capturing three Iranian pilots after downing fighter jets Changes Everything",
+    "title": "Qatar Pilot Denial: Iran's Hidden Play?",
+    "script_path": "batch_output/2026-06-04/script.json",
+    "video_path": "batch_output/2026-06-04/short.mp4",
+    "audio_path": "batch_output/2026-06-04/narration.mp3",
+    "thumbnail_path": "batch_output/2026-06-04/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Qatar Pilot Denial: Iran's Hidden Play?... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 58
+  },
+  {
+    "scheduled_date": "2026-06-05",
+    "topic": "What if Iran and Israel Launch Full Nuclear War?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-06-06",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-06-07",
+    "topic": "What if Iran Gets Nuclear Weapons?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-06-08",
+    "topic": "Israel's Secret Nuclear Arsenal: What We Know",
+    "title": "Israel's Hidden Nuclear Arsenal Exposed",
+    "script_path": "batch_output/2026-06-08/script.json",
+    "video_path": "batch_output/2026-06-08/short.mp4",
+    "audio_path": "batch_output/2026-06-08/narration.mp3",
+    "thumbnail_path": "batch_output/2026-06-08/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Israel's Hidden Nuclear Arsenal Exposed... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 51
+  },
+  {
+    "scheduled_date": "2026-06-09",
+    "topic": "Israel's Arrow 3: The Missile That Can Intercept in Space",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-06-10",
+    "topic": "Israel's Trophy System: Why Tanks Are Almost Impossible to Destroy",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
