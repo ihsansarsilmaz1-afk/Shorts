@@ -1549,5 +1549,85 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-02",
+    "topic": "Israel's Trophy System: Why Tanks Are Almost Impossible to Destroy",
+    "title": "Trophy APS: Can Israel's Tanks Survive?",
+    "script_path": "batch_output/2026-07-02/script.json",
+    "video_path": "batch_output/2026-07-02/short.mp4",
+    "audio_path": "batch_output/2026-07-02/narration.mp3",
+    "thumbnail_path": "batch_output/2026-07-02/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🔥 Bold prediction time: How does this end?\n\nA) Escalation 💥\nB) Diplomacy 🤝\nC) Surprise twist 🔄\n\nDrop your answer! 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Trophy APS: Can Israel's Tanks Survive?... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 60
+  },
+  {
+    "scheduled_date": "2026-07-03",
+    "topic": "What if Iran and Saudi Arabia Go to Full War?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-04",
+    "topic": "Iran vs Israel: The Shadow War Nobody Talks About",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-05",
+    "topic": "Israel's Arrow 3: The Missile That Can Intercept in Space",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-06",
+    "topic": "What if Israel and Iran Go to Full-Scale War?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-07",
+    "topic": "What if the Gulf States Unite Against Iran?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-08",
+    "topic": "UAE vs Iran: The Hidden Arms Race in the Gulf",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
