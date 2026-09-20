@@ -1629,5 +1629,85 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-09",
+    "topic": "Israel's Iron Dome: How It Actually Works",
+    "title": "Can Iron Dome Stop ALL Rockets? (Shocking)",
+    "script_path": "batch_output/2026-07-09/script.json",
+    "video_path": "batch_output/2026-07-09/short.mp4",
+    "audio_path": "batch_output/2026-07-09/narration.mp3",
+    "thumbnail_path": "batch_output/2026-07-09/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "Only 10% get this right... 🤔 If Iron Dome is 90% effective, what happens to the *other* 10%?\nA) They're ignored\nB) Targeted differently\nC) A & B\nReply below! 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Can Iron Dome Stop ALL Rockets? (Shockin... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 52
+  },
+  {
+    "scheduled_date": "2026-07-10",
+    "topic": "Israel's Secret Nuclear Arsenal: What We Know",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-11",
+    "topic": "Israel's AI-Powered Battlefield: The Future Is Already Here",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-12",
+    "topic": "Israel's Arrow 3: The Missile That Can Intercept in Space",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-13",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-14",
+    "topic": "UAE vs Iran: The Hidden Arms Race in the Gulf",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-07-15",
+    "topic": "What if the Gulf States Unite Against Iran?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
