@@ -1966,5 +1966,153 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-06",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "Iran's Proxy Army: UNSTOPPABLE FORCE?",
+    "script_path": "batch_output/2026-08-06/script.json",
+    "video_path": "batch_output/2026-08-06/short.mp4",
+    "audio_path": "batch_output/2026-08-06/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-06/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "Is Iran's proxy network unstoppable? 🤔\nA) Yes, pure dominance 🚀\nB) No, vulnerabilities exist ⚠️\nC) It's complicated 🤷‍♀️\nOnly 10% get this right! Vote below! 👇",
+      "community_poll": {
+        "text": "Are Iran's proxy forces the biggest threat in the Middle East today? 🤔 Let us know what you think! 💥",
+        "poll_options": [
+          "Yes, unstoppable",
+          "Major threat",
+          "Overstated",
+          "Not a threat"
+        ]
+      },
+      "debate_starter": "Thinking Iran's proxies are an \"unstoppable force\" is a dangerous oversimplification. Their reliance on asymmetric tactics makes them vulnerable to targeted strikes. Are we underestimating their weakn",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 59
+  },
+  {
+    "scheduled_date": "2026-08-07",
+    "topic": "[NEWS] Iran says 'global economy will improve' if US removes forces from the : The Analysis Nobody Is Giving You",
+    "title": "Iran's Threat: Is the Global Economy Next?",
+    "script_path": "batch_output/2026-08-07/script.json",
+    "video_path": "batch_output/2026-08-07/short.mp4",
+    "audio_path": "batch_output/2026-08-07/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-07/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iran's Threat: Is the Global Economy Nex... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🔮 CRYSTAL BALL TIME: Iran's Threat: Is the Global Economy Nex\n\nComment your wildest theory about what happens next.\nWrong answers only 😂👇"
+    },
+    "score": 57
+  },
+  {
+    "scheduled_date": "2026-08-08",
+    "topic": "[NEWS] What Israeli defense officials monitor Iran amid civil unrest risks and pro Really Means for the Future",
+    "title": "Iran's Nuclear Gambit: Israel's Silent Alert",
+    "script_path": "batch_output/2026-08-08/script.json",
+    "video_path": "batch_output/2026-08-08/short.mp4",
+    "audio_path": "batch_output/2026-08-08/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-08/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iran's Nuclear Gambit: Israel's Silent A... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 43
+  },
+  {
+    "scheduled_date": "2026-08-09",
+    "topic": "[NEWS] The Victory of Asymmetry in the Iran War: Here's What It Means for the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-10",
+    "topic": "Iran's Drone Army: How They Changed the Middle East",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-11",
+    "topic": "What if Iran Gets Nuclear Weapons?",
+    "title": "Iran's Nuclear Bomb: The Domino Effect",
+    "script_path": "batch_output/2026-08-11/script.json",
+    "video_path": "batch_output/2026-08-11/short.mp4",
+    "audio_path": "batch_output/2026-08-11/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-11/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iran's Nuclear Bomb: The Domino Effect... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 49
+  },
+  {
+    "scheduled_date": "2026-08-12",
+    "topic": "Israel's Iron Dome: How It Actually Works",
+    "title": "Iron Dome: Israel's Shield Explained",
+    "script_path": "batch_output/2026-08-12/script.json",
+    "video_path": "batch_output/2026-08-12/short.mp4",
+    "audio_path": "batch_output/2026-08-12/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-12/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iron Dome: Israel's Shield Explained... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🎯 PREDICTION GAME: What happens by end of 2026?\n\nDrop your prediction — I'll pin the best one! 📌\n\nMost creative prediction wins a shoutout! 🏆"
+    },
+    "score": 43
   }
 ]
