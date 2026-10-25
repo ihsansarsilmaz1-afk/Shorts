@@ -2114,5 +2114,85 @@
       "prediction_game": "🎯 PREDICTION GAME: What happens by end of 2026?\n\nDrop your prediction — I'll pin the best one! 📌\n\nMost creative prediction wins a shoutout! 🏆"
     },
     "score": 43
+  },
+  {
+    "scheduled_date": "2026-08-13",
+    "topic": "Israel's Iron Dome: How It Actually Works",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Hiç video klip indirilemedi."
+  },
+  {
+    "scheduled_date": "2026-08-14",
+    "topic": "[NEWS] What The US Navy Just Handed the World a Big Clue that the Iran War Is Nowh Really Means for the Future",
+    "title": "US Navy's Iran War Signal",
+    "script_path": "batch_output/2026-08-14/script.json",
+    "video_path": "batch_output/2026-08-14/short.mp4",
+    "audio_path": "batch_output/2026-08-14/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-14/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on US Navy's Iran War Signal... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "Are we *sure* this is about Iran, or is it just posturing for domestic consumption? 🤔",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 34
+  },
+  {
+    "scheduled_date": "2026-08-15",
+    "topic": "[NEWS] Trump weighs new Iran strikes as US sends more warships to Middle East: The Analysis Nobody Is Giving You",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-16",
+    "topic": "[NEWS] Trump mocks reporter asking about Iran strikes, as Tehran says US dera: Here's What It Means for the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-17",
+    "topic": "[NEWS] Iran's army claims it shot down US drone over southern Iran: The Analysis Nobody Is Giving You",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-18",
+    "topic": "[NEWS] US says it can sustain Iran blockade for ‘foreseeable future’: Here's What It Means for the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-19",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
