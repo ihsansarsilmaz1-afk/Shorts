@@ -2194,5 +2194,102 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-20",
+    "topic": "What if Iran and Israel Launch Full Nuclear War?",
+    "title": "Iran's Nuclear Clock Ticks Down: 3 Days?",
+    "script_path": "batch_output/2026-08-20/script.json",
+    "video_path": "batch_output/2026-08-20/short.mp4",
+    "audio_path": "batch_output/2026-08-20/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-20/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "Only 10% get this right... 🤯 Iran's enrichment: A) Is a bluff B) Is imminent threat C) Will be contained. Vote below! 👇 #IranNuclear",
+      "community_poll": {
+        "text": "Is a nuclear Iran an inevitable reality or a preventable crisis? 🤔⏳",
+        "poll_options": [
+          "Inevitable",
+          "Preventable",
+          "Already Here",
+          "Not Possible"
+        ]
+      },
+      "debate_starter": "The real threat isn't Iran's bomb, it's the panic it incites. Are we more scared of nukes or of ourselves? ⚛️",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 60
+  },
+  {
+    "scheduled_date": "2026-08-21",
+    "topic": "Israel's Iron Dome: How It Actually Works",
+    "title": "Iron Dome: 10% Failure Rate? The Truth",
+    "script_path": "batch_output/2026-08-21/script.json",
+    "video_path": "batch_output/2026-08-21/short.mp4",
+    "audio_path": "batch_output/2026-08-21/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-21/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Iron Dome: 10% Failure Rate? The Truth... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🔮 CRYSTAL BALL TIME: Iron Dome: 10% Failure Rate? The Truth\n\nComment your wildest theory about what happens next.\nWrong answers only 😂👇"
+    },
+    "score": 53
+  },
+  {
+    "scheduled_date": "2026-08-22",
+    "topic": "Iran's Proxy Network: The Most Powerful Non-State Military in the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-23",
+    "topic": "What if Iran Gets Nuclear Weapons?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-24",
+    "topic": "[NEWS] 274 US Military Structures Damaged at 24 Sites amid Iran’s Retaliation: Here's What It Means for the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-25",
+    "topic": "Israel's Arrow 3: The Missile That Can Intercept in Space",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-26",
+    "topic": "What if Iran and Saudi Arabia Go to Full War?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
