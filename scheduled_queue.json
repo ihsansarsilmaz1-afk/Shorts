@@ -2291,5 +2291,85 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-27",
+    "topic": "[NEWS] Will Eisenkot be able to form Israel’s next gov’t amid divided opposit: Here's What It Means for the World",
+    "title": "Israel's War Cabinet Crumbles: What's Next?",
+    "script_path": "batch_output/2026-08-27/script.json",
+    "video_path": "batch_output/2026-08-27/short.mp4",
+    "audio_path": "batch_output/2026-08-27/narration.mp3",
+    "thumbnail_path": "batch_output/2026-08-27/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "Is Benny Gantz's departure a game-changer for Netanyahu's government or just a minor shake-up? 🤔💥",
+        "poll_options": [
+          "Major blow",
+          "Minor setback",
+          "No real impact",
+          "Too early to tell"
+        ]
+      },
+      "debate_starter": "Gantz's exit is a power play, not a moral stand. Netanyahu will just find new puppets. 🤡 What's the real impact?",
+      "prediction_game": "🧠 INTEL TEST: Based on this briefing...\n\nWhat would YOU do as commander-in-chief?\nMost strategic answer wins! 🎖️👇"
+    },
+    "score": 55
+  },
+  {
+    "scheduled_date": "2026-08-28",
+    "topic": "[NEWS] What US launches new targeted strikes on Iran as Trump claims progress in t Really Means for the Future",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-29",
+    "topic": "[NEWS] Iran’s IRGC says building underground sites for weapons production, st: The Analysis Nobody Is Giving You",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-30",
+    "topic": "Israel's AI-Powered Battlefield: The Future Is Already Here",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-08-31",
+    "topic": "[NEWS] Why U.S. military carries out new limited strikes on Iran Changes Everything",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-09-01",
+    "topic": "Iran's Drone Army: How They Changed the Middle East",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-09-02",
+    "topic": "Israel's Iron Dome: How It Actually Works",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
