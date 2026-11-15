@@ -2371,5 +2371,102 @@
     "video_path": null,
     "published": false,
     "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-09-03",
+    "topic": "What if Iran Closes the Strait of Hormuz Tomorrow?",
+    "title": "Strait of Hormuz Blockade: What Happens Next?",
+    "script_path": "batch_output/2026-09-03/script.json",
+    "video_path": "batch_output/2026-09-03/short.mp4",
+    "audio_path": "batch_output/2026-09-03/narration.mp3",
+    "thumbnail_path": "batch_output/2026-09-03/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "⚡ Hot take: What happens next?\n\n🔴 Full-scale war\n🟡 Cold war standoff\n🟢 Peace deal\n\nVote below! Most get this WRONG 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Strait of Hormuz Blockade: What Happens ... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "Closing Hormuz is a power move Iran can't sustain. It's just a bluff, right? 🤔",
+      "prediction_game": "⚡ 30-SECOND CHALLENGE: After watching this video...\n\nWhat's the ONE thing that could change everything?\nBest answer gets pinned! 📌👇"
+    },
+    "score": 53
+  },
+  {
+    "scheduled_date": "2026-09-04",
+    "topic": "Israel's Iron Dome: How It Actually Works",
+    "title": "Israel's Iron Dome: Secret Tech?",
+    "script_path": "batch_output/2026-09-04/script.json",
+    "video_path": "batch_output/2026-09-04/short.mp4",
+    "audio_path": "batch_output/2026-09-04/narration.mp3",
+    "thumbnail_path": "batch_output/2026-09-04/thumbnail.png",
+    "language": "en",
+    "published": false,
+    "engagement_pack": {
+      "pinned_comment": "🎯 Prediction challenge: Only 5% get this right!\n\nWhat's the REAL endgame here? Comment your theory 👇",
+      "community_poll": {
+        "text": "🔥 After watching today's analysis on Israel's Iron Dome: Secret Tech?... What's YOUR prediction?",
+        "poll_options": [
+          "Full escalation 💥",
+          "Diplomatic solution 🤝",
+          "Status quo continues",
+          "Something nobody expects 🔮"
+        ]
+      },
+      "debate_starter": "",
+      "prediction_game": "🎯 PREDICTION GAME: What happens by end of 2026?\n\nDrop your prediction — I'll pin the best one! 📌\n\nMost creative prediction wins a shoutout! 🏆"
+    },
+    "score": 50
+  },
+  {
+    "scheduled_date": "2026-09-05",
+    "topic": "Israel's Secret Nuclear Arsenal: What We Know",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-09-06",
+    "topic": "Israel's AI-Powered Battlefield: The Future Is Already Here",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-09-07",
+    "topic": "What if Iran and Saudi Arabia Go to Full War?",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-09-08",
+    "topic": "[NEWS] US intercepts two Iranian drones as IRGC claims strike on radar in Bah: Here's What It Means for the World",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
+  },
+  {
+    "scheduled_date": "2026-09-09",
+    "topic": "[NEWS] Why Gulf States Demand Full Compensation from Iran for Missile and Drone A Changes Everything",
+    "title": "?",
+    "script_path": null,
+    "video_path": null,
+    "published": false,
+    "error": "Tüm script üretim denemeleri başarısız oldu."
   }
 ]
